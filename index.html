@@ -1,254 +1,311 @@
 
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>NMS Companion</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NMS Companion 2.0</title>
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#101b22;color:#e9f4f2;font:16px Arial,sans-serif}
-header{padding:22px;background:#19332f;border-bottom:2px solid #54d5ad}
-h1{margin:0;color:#76e3bd}
-header p{margin:6px 0 0;color:#b5ccc5}
-main{max-width:1100px;margin:auto;padding:18px}
-.stats{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px}
-.stat{background:#20343c;padding:14px;border-radius:10px;flex:1;min-width:100px}
-.stat strong{display:block;font-size:25px;color:#76e3bd}
-nav{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:18px}
-button{background:#29444b;color:white;border:1px solid #47636a;border-radius:8px;padding:11px;cursor:pointer}
-button.active,button.add{background:#58d2aa;color:#10231e}
-button.delete{color:#ff9999}
-input,select,textarea{background:#182a32;color:white;border:1px solid #47636a;border-radius:8px;padding:11px;font-size:16px;width:100%}
-.controls{display:flex;gap:8px;margin-bottom:15px;flex-wrap:wrap}
-.controls input{flex:1;min-width:160px}
-#items{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
-.item{background:#20343c;border:1px solid #38545c;border-radius:10px;padding:14px}
-.item h3{margin:0 0 8px}
-.qty{color:#76e3bd;font-size:23px;font-weight:bold}
-.item small{color:#a9c0bd}
-.actions{display:flex;gap:6px;margin-top:12px}
-.actions button{flex:1}
-form{display:grid;gap:10px;background:#20343c;padding:15px;border-radius:12px;margin-bottom:18px}
-.hidden{display:none}
-label{color:#b9d0ca;font-size:13px}
-.empty{padding:30px;text-align:center;color:#a9c0bd;background:#20343c;border-radius:10px}
-footer{color:#8fa9a5;text-align:center;font-size:12px;padding:25px}
+header{padding:22px;background:#19333d}
+h1{margin:0;font-size:26px}
+small,.muted{color:#a8bdc2}
+main{max-width:1000px;margin:auto;padding:18px}
+.card{background:#1b3039;border:1px solid #34505b;border-radius:14px;padding:18px;margin-bottom:16px}
+button,input,select,textarea{font:inherit}
+button{background:#38c5b5;color:#082b2b;border:0;border-radius:8px;padding:11px 14px;cursor:pointer;font-weight:bold}
+button.secondary{background:#34515d;color:white}
+button.danger{background:#ad4850;color:white}
+input,select,textarea{background:#10232b;color:white;border:1px solid #55717b;border-radius:8px;padding:11px;width:100%;margin:5px 0 10px}
+label{display:block;margin-top:8px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+.item{padding:12px;border-bottom:1px solid #34505b}
+.item:last-child{border-bottom:0}
+.item strong{font-size:17px}
+.item .actions button{padding:7px 10px}
+.hidden{display:none!important}
+pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#10232b;padding:12px;border-radius:8px}
+.status{padding:10px;border-radius:8px;background:#274750;margin:10px 0}
 </style>
 </head>
 <body>
 <header>
-<h1>🚀 NMS COMPANION</h1>
-<p>Personal No Man's Sky inventory tracker</p>
+<h1>🚀 NMS Companion 2.0</h1>
+<small>No Man's Sky inventory manager</small>
 </header>
 <main>
-<section class="stats">
-<div class="stat"><strong id="entries">0</strong>Items</div>
-<div class="stat"><strong id="units">0</strong>Total units</div>
-<div class="stat"><strong id="locations">0</strong>Locations used</div>
+
+<section class="card">
+<h2>Inventory</h2>
+<div class="grid">
+<div>
+<label>Location</label>
+<select id="locationFilter">
+<option value="All">All</option>
+<option>Exosuit</option>
+<option>Starship</option>
+<option>Multi-Tool</option>
+<option>Freighter</option>
+<option>Storage</option>
+<option>Exocraft</option>
+</select>
+</div>
+<div>
+<label>Search</label>
+<input id="search" placeholder="Search items">
+</div>
+</div>
+<div id="items"></div>
 </section>
 
-<h2>Inventory locations</h2>
-<nav id="nav"></nav>
-
-<div class="controls">
-<input id="search" placeholder="Search items...">
-<button class="add" onclick="showForm()">＋ Add item</button>
-<button onclick="exportData()">Export</button>
-<button onclick="document.getElementById('file').click()">Import</button>
-<input id="file" type="file" accept=".json" class="hidden" onchange="importData(event)">
-</div>
-
-<form id="form" class="hidden" onsubmit="saveItem(event)">
-<h2 id="formTitle">Add item</h2>
+<section class="card">
+<h2>Add / Edit Item</h2>
+<input id="editId" type="hidden">
+<div class="grid">
+<div>
 <label>Item name</label>
-<input id="name" required placeholder="e.g. Cadmium">
+<input id="itemName" placeholder="e.g. Cadmium">
+</div>
+<div>
 <label>Quantity</label>
-<input id="qty" type="number" min="0" value="1" required>
+<input id="quantity" type="number" min="0" value="1">
+</div>
+<div>
 <label>Location</label>
-<select id="location"></select>
+<select id="itemLocation">
+<option>Exosuit</option>
+<option>Starship</option>
+<option>Multi-Tool</option>
+<option>Freighter</option>
+<option>Storage</option>
+<option>Exocraft</option>
+</select>
+</div>
+</div>
 <label>Notes</label>
-<input id="notes" placeholder="Optional notes">
-<div class="controls">
-<button class="add" type="submit">Save item</button>
-<button type="button" onclick="hideForm()">Cancel</button>
-</div>
-</form>
-
-<h2 id="heading">All inventory</h2>
-<div id="items"></div>
-</main>
-<footer>NMS Companion · Inventory is saved in this browser</footer>
-
-<script>
-const places=[
-["all","All inventory"],
-["exosuit","Exosuit"],
-["starship","Starship"],
-["freighter","Freighter"],
-...Array.from({length:10},(_,i)=>["storage"+i,"Storage Container "+i]),
-["multitool","Multi-Tool"]
-];
-
-let items=[];
-let current="all";
-let editing=null;
-
-try{
-items=JSON.parse(localStorage.getItem("nmsitems")||"[]");
-}catch(e){items=[]}
-
-const $=id=>document.getElementById(id);
-const placeName=id=>places.find(p=>p[0]===id)?.[1]||id;
-
-function saveData(){
-localStorage.setItem("nmsitems",JSON.stringify(items));
-}
-
-function escapeHTML(s){
-return String(s??"").replace(/[&<>"']/g,c=>({
-"&":"&amp;","<":"&lt;",">":"&gt;",
-'"':"&quot;","'":"&#39;"
-}[c]));
-}
-
-function render(){
-$("nav").innerHTML=places.map(p=>
-`<button class="${current===p[0]?"active":""}"
-onclick="selectPlace('${p[0]}')">
-${p[1]} (${p[0]==="all"?items.length:
-items.filter(x=>x.location===p[0]).length})
-</button>`).join("");
-
-$("heading").textContent=placeName(current);
-
-const q=$("search").value.toLowerCase();
-
-const visible=items.filter(x=>
-(current==="all"||x.location===current)&&
-(x.name+" "+(x.notes||"")).toLowerCase().includes(q)
-);
-
-$("entries").textContent=items.length;
-$("units").textContent=items.reduce((a,x)=>a+Number(x.qty),0);
-$("locations").textContent=new Set(items.map(x=>x.location)).size;
-
-$("items").innerHTML=visible.length?visible.map(x=>`
-<div class="item">
-<h3>${escapeHTML(x.name)}</h3>
-<div class="qty">${Number(x.qty).toLocaleString()}</div>
-<small>${escapeHTML(placeName(x.location))}</small>
-${x.notes?`<p>${escapeHTML(x.notes)}</p>`:""}
+<textarea id="notes" rows="2"></textarea>
 <div class="actions">
-<button onclick="editItem('${x.id}')">Edit</button>
-<button class="delete" onclick="deleteItem('${x.id}')">Delete</button>
+<button onclick="saveItem()">Save Item</button>
+<button class="secondary" onclick="clearForm()">Clear</button>
 </div>
-</div>`).join(""):'<div class="empty">No items found. Add your first item!</div>';
-}
+</section>
 
-function selectPlace(id){
-current=id;
+<section class="card">
+<h2>🤖 Update from ChatGPT</h2>
+<p>Send an inventory screenshot to ChatGPT. Open the update link ChatGPT gives you to preview and apply changes here.</p>
+<div id="updateStatus" class="status">No pending update.</div>
+<div id="preview" class="hidden">
+<h3>Update preview</h3>
+<div id="previewItems"></div>
+<div class="actions">
+<button onclick="applyUpdate()">Apply Update</button>
+<button class="secondary" onclick="cancelUpdate()">Cancel</button>
+</div>
+</div>
+</section>
+
+<section class="card">
+<h2>Backup & Import</h2>
+<p class="muted">Export your inventory as a backup. Import replaces the current inventory.</p>
+<div class="actions">
+<button onclick="exportData()">Export Backup</button>
+<button class="secondary" onclick="document.getElementById('importFile').click()">Import JSON</button>
+<input id="importFile" type="file" accept=".json,application/json" class="hidden">
+</div>
+</section>
+
+</main>
+<script>
+const KEY='nmsitems';
+const BACKUP_KEY='nmsitems_backup';
+const LOCATIONS=['Exosuit','Starship','Multi-Tool','Freighter','Storage','Exocraft'];
+let items=[];
+let pendingUpdate=null;
+
+function el(id){return document.getElementById(id)}
+function load(){
+try{
+const data=JSON.parse(localStorage.getItem(KEY)||'[]');
+items=Array.isArray(data)?data:[];
+}catch(e){items=[]}
 render();
 }
-
-function showForm(){
-editing=null;
-$("form").reset();
-$("formTitle").textContent="Add item";
-$("location").innerHTML=places.filter(p=>p[0]!=="all")
-.map(p=>`<option value="${p[0]}">${p[1]}</option>`).join("");
-$("location").value=current==="all"?"exosuit":current;
-$("form").classList.remove("hidden");
-$("name").focus();
-}
-
-function hideForm(){
-$("form").classList.add("hidden");
-}
-
-function saveItem(e){
-e.preventDefault();
-
-const item={
-id:editing||("i"+Date.now()),
-name:$("name").value.trim(),
-qty:Math.max(0,Number($("qty").value)),
-location:$("location").value,
-notes:$("notes").value.trim()
-};
-
-if(!item.name)return;
-
-if(editing){
-items=items.map(x=>x.id===editing?item:x);
-}else{
-items.push(item);
-}
-
-saveData();
-hideForm();
+function persist(){
+localStorage.setItem(KEY,JSON.stringify(items));
 render();
 }
-
-function editItem(id){
-const x=items.find(x=>x.id===id);
-if(!x)return;
-
-showForm();
-editing=id;
-$("formTitle").textContent="Edit item";
-$("name").value=x.name;
-$("qty").value=x.qty;
-$("location").value=x.location;
-$("notes").value=x.notes||"";
+function escapeHtml(s){
+return String(s??'').replace(/[&<>"']/g,c=>({
+'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+})[c]);
 }
-
-function deleteItem(id){
-if(!confirm("Delete this item?"))return;
-items=items.filter(x=>x.id!==id);
-saveData();
-render();
-}
-
-function exportData(){
-const blob=new Blob(
-[JSON.stringify({app:"NMS Companion",items},null,2)],
-{type:"application/json"}
+function render(){
+const filter=el('locationFilter').value;
+const search=el('search').value.toLowerCase();
+const visible=items.filter(x=>
+(filter==='All'||x.location===filter)&&
+String(x.name||'').toLowerCase().includes(search)
 );
-const a=document.createElement("a");
-a.href=URL.createObjectURL(blob);
-a.download="nms-companion-backup.json";
-a.click();
-URL.revokeObjectURL(a.href);
+el('items').innerHTML=visible.length?
+visible.map(x=>`
+<div class="item">
+<strong>${escapeHtml(x.name)}</strong>
+<div>${escapeHtml(x.location)} · Quantity: ${escapeHtml(x.quantity)}</div>
+${x.notes?`<small>${escapeHtml(x.notes)}</small>`:''}
+<div class="actions">
+<button class="secondary" onclick="editItem(${JSON.stringify(x.id)})">Edit</button>
+<button class="danger" onclick="deleteItem(${JSON.stringify(x.id)})">Delete</button>
+</div>
+</div>`).join(''):
+'<p class="muted">No items found.</p>';
 }
-
-function importData(e){
+function clearForm(){
+el('editId').value='';
+el('itemName').value='';
+el('quantity').value=1;
+el('itemLocation').value='Exosuit';
+el('notes').value='';
+}
+function saveItem(){
+const name=el('itemName').value.trim();
+const quantity=Number(el('quantity').value);
+if(!name||!Number.isFinite(quantity)||quantity<0){
+alert('Enter a valid name and quantity.');return;
+}
+const id=el('editId').value;
+const item={
+id:id||String(Date.now())+Math.random().toString(36).slice(2),
+name,quantity,
+location:el('itemLocation').value,
+notes:el('notes').value.trim()
+};
+const i=items.findIndex(x=>String(x.id)===String(id));
+if(i>=0)items[i]=item;else items.push(item);
+persist();clearForm();
+}
+function editItem(id){
+const x=items.find(x=>String(x.id)===String(id));
+if(!x)return;
+el('editId').value=x.id;
+el('itemName').value=x.name;
+el('quantity').value=x.quantity;
+el('itemLocation').value=x.location;
+el('notes').value=x.notes||'';
+window.scrollTo({top:document.body.scrollHeight/3,behavior:'smooth'});
+}
+function deleteItem(id){
+if(!confirm('Delete this item?'))return;
+items=items.filter(x=>String(x.id)!==String(id));
+persist();
+}
+function exportData(){
+const blob=new Blob([JSON.stringify(items,null,2)],{type:'application/json'});
+const a=document.createElement('a');
+a.href=URL.createObjectURL(blob);
+a.download='nms-companion-backup.json';
+a.click();
+setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+el('importFile').addEventListener('change',async e=>{
 const file=e.target.files[0];
 if(!file)return;
-
-const reader=new FileReader();
-reader.onload=()=>{
 try{
-const data=JSON.parse(reader.result);
-const incoming=Array.isArray(data)?data:data.items;
-if(!Array.isArray(incoming))throw Error();
+const data=JSON.parse(await file.text());
+if(!Array.isArray(data))throw Error('Invalid format');
+if(!confirm('Replace your current inventory with imported data?'))return;
+localStorage.setItem(BACKUP_KEY,JSON.stringify(items));
+items=data;
+persist();
+alert('Import completed.');
+}catch(err){alert('Import failed: '+err.message)}
+e.target.value='';
+});
+el('locationFilter').addEventListener('change',render);
+el('search').addEventListener('input',render);
 
-if(confirm("Importing will replace your current inventory. Continue?")){
-items=incoming.filter(x=>x&&typeof x.name==="string"&&
-places.some(p=>p[0]===x.location&&p[0]!=="all"));
-saveData();
-render();
+function decodeBase64Url(s){
+const normalized=s.replace(/-/g,'+').replace(/_/g,'/');
+const binary=atob(normalized);
+const bytes=Uint8Array.from(binary,c=>c.charCodeAt(0));
+return new TextDecoder().decode(bytes);
 }
+function normalizeUpdate(raw){
+if(!raw||typeof raw!=='object'||!Array.isArray(raw.items))
+throw Error('Invalid update format');
+const mode=raw.mode||'merge';
+if(mode!=='merge')throw Error('Unsupported update mode');
+const changes=raw.items.map(x=>{
+const name=String(x.name||'').trim();
+const location=String(x.location||'').trim();
+const quantity=Number(x.quantity);
+if(!name||!LOCATIONS.includes(location)||
+!Number.isSafeInteger(quantity)||quantity<0)
+throw Error('Invalid item: '+name);
+return{name,location,quantity,notes:String(x.notes||'')};
+});
+return{mode,items:changes};
+}
+function checkUpdateLink(){
+const params=new URLSearchParams(location.hash.slice(1));
+const encoded=params.get('nmsupdate');
+if(!encoded)return;
+try{
+pendingUpdate=normalizeUpdate(JSON.parse(decodeBase64Url(encoded)));
+showPreview();
 }catch(err){
-alert("Invalid backup file.");
+el('updateStatus').textContent='Update link error: '+err.message;
 }
-};
-reader.readAsText(file);
-e.target.value="";
+history.replaceState(null,'',location.pathname+location.search);
 }
-
-$("search").addEventListener("input",render);
-render();
+function showPreview(){
+if(!pendingUpdate)return;
+el('updateStatus').textContent=
+`${pendingUpdate.items.length} item(s) ready for review.`;
+el('preview').classList.remove('hidden');
+el('previewItems').innerHTML=pendingUpdate.items.map(x=>{
+const old=items.find(y=>
+String(y.name).toLowerCase()===x.name.toLowerCase()&&
+y.location===x.location);
+return `<div class="item">
+<strong>${escapeHtml(x.name)}</strong>
+<div>${escapeHtml(x.location)}</div>
+<div>${old?'Current: '+escapeHtml(old.quantity):'New item'}
+ → ${escapeHtml(x.quantity)}</div>
+</div>`;
+}).join('');
+}
+function applyUpdate(){
+if(!pendingUpdate)return;
+localStorage.setItem(BACKUP_KEY,JSON.stringify(items));
+for(const change of pendingUpdate.items){
+const i=items.findIndex(x=>
+String(x.name).toLowerCase()===change.name.toLowerCase()&&
+x.location===change.location);
+if(i>=0){
+items[i].quantity=change.quantity;
+if(change.notes)items[i].notes=change.notes;
+}else{
+items.push({
+id:String(Date.now())+Math.random().toString(36).slice(2),
+...change
+});
+}
+}
+persist();
+pendingUpdate=null;
+el('preview').classList.add('hidden');
+el('updateStatus').textContent='Update applied successfully.';
+}
+function cancelUpdate(){
+pendingUpdate=null;
+el('preview').classList.add('hidden');
+el('updateStatus').textContent='Update cancelled.';
+}
+window.addEventListener('hashchange',checkUpdateLink);
+load();
+checkUpdateLink();
 </script>
 </body>
 </html>
