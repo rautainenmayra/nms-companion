@@ -1,0 +1,254 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NMS Companion</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#101b22;color:#e9f4f2;font:16px Arial,sans-serif}
+header{padding:22px;background:#19332f;border-bottom:2px solid #54d5ad}
+h1{margin:0;color:#76e3bd}
+header p{margin:6px 0 0;color:#b5ccc5}
+main{max-width:1100px;margin:auto;padding:18px}
+.stats{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px}
+.stat{background:#20343c;padding:14px;border-radius:10px;flex:1;min-width:100px}
+.stat strong{display:block;font-size:25px;color:#76e3bd}
+nav{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:18px}
+button{background:#29444b;color:white;border:1px solid #47636a;border-radius:8px;padding:11px;cursor:pointer}
+button.active,button.add{background:#58d2aa;color:#10231e}
+button.delete{color:#ff9999}
+input,select,textarea{background:#182a32;color:white;border:1px solid #47636a;border-radius:8px;padding:11px;font-size:16px;width:100%}
+.controls{display:flex;gap:8px;margin-bottom:15px;flex-wrap:wrap}
+.controls input{flex:1;min-width:160px}
+#items{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
+.item{background:#20343c;border:1px solid #38545c;border-radius:10px;padding:14px}
+.item h3{margin:0 0 8px}
+.qty{color:#76e3bd;font-size:23px;font-weight:bold}
+.item small{color:#a9c0bd}
+.actions{display:flex;gap:6px;margin-top:12px}
+.actions button{flex:1}
+form{display:grid;gap:10px;background:#20343c;padding:15px;border-radius:12px;margin-bottom:18px}
+.hidden{display:none}
+label{color:#b9d0ca;font-size:13px}
+.empty{padding:30px;text-align:center;color:#a9c0bd;background:#20343c;border-radius:10px}
+footer{color:#8fa9a5;text-align:center;font-size:12px;padding:25px}
+</style>
+</head>
+<body>
+<header>
+<h1>🚀 NMS COMPANION</h1>
+<p>Personal No Man's Sky inventory tracker</p>
+</header>
+<main>
+<section class="stats">
+<div class="stat"><strong id="entries">0</strong>Items</div>
+<div class="stat"><strong id="units">0</strong>Total units</div>
+<div class="stat"><strong id="locations">0</strong>Locations used</div>
+</section>
+
+<h2>Inventory locations</h2>
+<nav id="nav"></nav>
+
+<div class="controls">
+<input id="search" placeholder="Search items...">
+<button class="add" onclick="showForm()">＋ Add item</button>
+<button onclick="exportData()">Export</button>
+<button onclick="document.getElementById('file').click()">Import</button>
+<input id="file" type="file" accept=".json" class="hidden" onchange="importData(event)">
+</div>
+
+<form id="form" class="hidden" onsubmit="saveItem(event)">
+<h2 id="formTitle">Add item</h2>
+<label>Item name</label>
+<input id="name" required placeholder="e.g. Cadmium">
+<label>Quantity</label>
+<input id="qty" type="number" min="0" value="1" required>
+<label>Location</label>
+<select id="location"></select>
+<label>Notes</label>
+<input id="notes" placeholder="Optional notes">
+<div class="controls">
+<button class="add" type="submit">Save item</button>
+<button type="button" onclick="hideForm()">Cancel</button>
+</div>
+</form>
+
+<h2 id="heading">All inventory</h2>
+<div id="items"></div>
+</main>
+<footer>NMS Companion · Inventory is saved in this browser</footer>
+
+<script>
+const places=[
+["all","All inventory"],
+["exosuit","Exosuit"],
+["starship","Starship"],
+["freighter","Freighter"],
+...Array.from({length:10},(_,i)=>["storage"+i,"Storage Container "+i]),
+["multitool","Multi-Tool"]
+];
+
+let items=[];
+let current="all";
+let editing=null;
+
+try{
+items=JSON.parse(localStorage.getItem("nmsitems")||"[]");
+}catch(e){items=[]}
+
+const $=id=>document.getElementById(id);
+const placeName=id=>places.find(p=>p[0]===id)?.[1]||id;
+
+function saveData(){
+localStorage.setItem("nmsitems",JSON.stringify(items));
+}
+
+function escapeHTML(s){
+return String(s??"").replace(/[&<>"']/g,c=>({
+"&":"&amp;","<":"&lt;",">":"&gt;",
+'"':"&quot;","'":"&#39;"
+}[c]));
+}
+
+function render(){
+$("nav").innerHTML=places.map(p=>
+`<button class="${current===p[0]?"active":""}"
+onclick="selectPlace('${p[0]}')">
+${p[1]} (${p[0]==="all"?items.length:
+items.filter(x=>x.location===p[0]).length})
+</button>`).join("");
+
+$("heading").textContent=placeName(current);
+
+const q=$("search").value.toLowerCase();
+
+const visible=items.filter(x=>
+(current==="all"||x.location===current)&&
+(x.name+" "+(x.notes||"")).toLowerCase().includes(q)
+);
+
+$("entries").textContent=items.length;
+$("units").textContent=items.reduce((a,x)=>a+Number(x.qty),0);
+$("locations").textContent=new Set(items.map(x=>x.location)).size;
+
+$("items").innerHTML=visible.length?visible.map(x=>`
+<div class="item">
+<h3>${escapeHTML(x.name)}</h3>
+<div class="qty">${Number(x.qty).toLocaleString()}</div>
+<small>${escapeHTML(placeName(x.location))}</small>
+${x.notes?`<p>${escapeHTML(x.notes)}</p>`:""}
+<div class="actions">
+<button onclick="editItem('${x.id}')">Edit</button>
+<button class="delete" onclick="deleteItem('${x.id}')">Delete</button>
+</div>
+</div>`).join(""):'<div class="empty">No items found. Add your first item!</div>';
+}
+
+function selectPlace(id){
+current=id;
+render();
+}
+
+function showForm(){
+editing=null;
+$("form").reset();
+$("formTitle").textContent="Add item";
+$("location").innerHTML=places.filter(p=>p[0]!=="all")
+.map(p=>`<option value="${p[0]}">${p[1]}</option>`).join("");
+$("location").value=current==="all"?"exosuit":current;
+$("form").classList.remove("hidden");
+$("name").focus();
+}
+
+function hideForm(){
+$("form").classList.add("hidden");
+}
+
+function saveItem(e){
+e.preventDefault();
+
+const item={
+id:editing||("i"+Date.now()),
+name:$("name").value.trim(),
+qty:Math.max(0,Number($("qty").value)),
+location:$("location").value,
+notes:$("notes").value.trim()
+};
+
+if(!item.name)return;
+
+if(editing){
+items=items.map(x=>x.id===editing?item:x);
+}else{
+items.push(item);
+}
+
+saveData();
+hideForm();
+render();
+}
+
+function editItem(id){
+const x=items.find(x=>x.id===id);
+if(!x)return;
+
+showForm();
+editing=id;
+$("formTitle").textContent="Edit item";
+$("name").value=x.name;
+$("qty").value=x.qty;
+$("location").value=x.location;
+$("notes").value=x.notes||"";
+}
+
+function deleteItem(id){
+if(!confirm("Delete this item?"))return;
+items=items.filter(x=>x.id!==id);
+saveData();
+render();
+}
+
+function exportData(){
+const blob=new Blob(
+[JSON.stringify({app:"NMS Companion",items},null,2)],
+{type:"application/json"}
+);
+const a=document.createElement("a");
+a.href=URL.createObjectURL(blob);
+a.download="nms-companion-backup.json";
+a.click();
+URL.revokeObjectURL(a.href);
+}
+
+function importData(e){
+const file=e.target.files[0];
+if(!file)return;
+
+const reader=new FileReader();
+reader.onload=()=>{
+try{
+const data=JSON.parse(reader.result);
+const incoming=Array.isArray(data)?data:data.items;
+if(!Array.isArray(incoming))throw Error();
+
+if(confirm("Importing will replace your current inventory. Continue?")){
+items=incoming.filter(x=>x&&typeof x.name==="string"&&
+places.some(p=>p[0]===x.location&&p[0]!=="all"));
+saveData();
+render();
+}
+}catch(err){
+alert("Invalid backup file.");
+}
+};
+reader.readAsText(file);
+e.target.value="";
+}
+
+$("search").addEventListener("input",render);
+render();
+</script>
+</body>
+</html>
