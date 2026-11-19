@@ -4,308 +4,373 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>NMS Companion 2.0</title>
+<title>NMS Companion 3.0</title>
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#101b22;color:#e9f4f2;font:16px Arial,sans-serif}
-header{padding:22px;background:#19333d}
-h1{margin:0;font-size:26px}
-small,.muted{color:#a8bdc2}
-main{max-width:1000px;margin:auto;padding:18px}
-.card{background:#1b3039;border:1px solid #34505b;border-radius:14px;padding:18px;margin-bottom:16px}
-button,input,select,textarea{font:inherit}
-button{background:#38c5b5;color:#082b2b;border:0;border-radius:8px;padding:11px 14px;cursor:pointer;font-weight:bold}
-button.secondary{background:#34515d;color:white}
-button.danger{background:#ad4850;color:white}
-input,select,textarea{background:#10232b;color:white;border:1px solid #55717b;border-radius:8px;padding:11px;width:100%;margin:5px 0 10px}
-label{display:block;margin-top:8px}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
-.actions{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
-.item{padding:12px;border-bottom:1px solid #34505b}
-.item:last-child{border-bottom:0}
-.item strong{font-size:17px}
-.item .actions button{padding:7px 10px}
-.hidden{display:none!important}
-pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#10232b;padding:12px;border-radius:8px}
-.status{padding:10px;border-radius:8px;background:#274750;margin:10px 0}
+header{padding:22px;background:#19332f;border-bottom:2px solid #54d5ad}
+h1{margin:0;color:#76e3bd}
+header p{color:#b5ccc5}
+main{max-width:1100px;margin:auto;padding:18px}
+.stats,.controls,nav,.actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:15px}
+.stat,.item,form,.panel{background:#20343c;padding:14px;border-radius:10px}
+.stat{flex:1;min-width:100px}
+.stat strong{display:block;font-size:25px;color:#76e3bd}
+button{background:#29444b;color:white;border:1px solid #47636a;border-radius:8px;padding:11px;cursor:pointer}
+button.active,button.add{background:#58d2aa;color:#10231e}
+button.delete{color:#ff9999}
+input,select{background:#182a32;color:white;border:1px solid #47636a;border-radius:8px;padding:11px;font-size:16px;width:100%}
+.controls input{flex:1;min-width:160px}
+#items{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
+.item h3{margin:0 0 8px}
+.qty{color:#76e3bd;font-size:23px;font-weight:bold}
+.item small{color:#a9c0bd}
+.actions{margin-top:12px}
+.actions button{flex:1}
+form{display:grid;gap:10px;margin-bottom:18px}
+.hidden{display:none}
+label{color:#b9d0ca;font-size:13px}
+.panel{border:1px solid #58d2aa;margin-bottom:16px}
+.preview-row{padding:10px;border-bottom:1px solid #38545c}
+.preview-row label{display:flex;align-items:center;gap:9px;font-size:15px}
+.preview-row input{width:auto}
+.warning{color:#ffd18a}
+footer{color:#8fa9a5;text-align:center;font-size:12px;padding:25px}
+#cloudStatus{font-size:14px;color:#b9d0ca;margin:8px 0}
+#cloudPanel input{margin:5px 0}
+#cloudPanel{border-color:#47636a}
+#cloudPanel button{margin:4px}
+#cloudPanel p{line-height:1.5}
 </style>
 </head>
 <body>
 <header>
-<h1>🚀 NMS Companion 2.0</h1>
-<small>No Man's Sky inventory manager</small>
+<h1>🚀 NMS COMPANION 3.0</h1>
+<p>Personal No Man's Sky inventory tracker</p>
 </header>
 <main>
-
-<section class="card">
-<h2>Inventory</h2>
-<div class="grid">
-<div>
-<label>Location</label>
-<select id="locationFilter">
-<option value="All">All</option>
-<option>Exosuit</option>
-<option>Starship</option>
-<option>Multi-Tool</option>
-<option>Freighter</option>
-<option>Storage</option>
-<option>Exocraft</option>
-</select>
+<section class="panel" id="cloudPanel">
+<h2>☁️ Cloud sync</h2>
+<p id="cloudStatus" role="status">Cloud is not configured. Your local inventory remains available.</p>
+<div id="setupCloud">
+<p>First-time setup: paste the Firebase web app configuration JSON from Firebase Console. This configuration is public app information, not a secret key. You can later embed it in the page for all your devices.</p>
+<input id="firebaseConfig" placeholder='Firebase config JSON: {"apiKey":"...",...}'>
+<button onclick="configureCloud()">Connect Firebase</button>
 </div>
-<div>
-<label>Search</label>
-<input id="search" placeholder="Search items">
+<div id="cloudAuth" class="hidden">
+<input id="email" type="email" autocomplete="username" placeholder="Email">
+<input id="password" type="password" autocomplete="current-password" placeholder="Password (at least 6 characters)">
+<button onclick="cloudLogin(false)">Sign in</button>
+<button onclick="cloudLogin(true)">Create account</button>
 </div>
+<div id="cloudSigned" class="hidden">
+<span id="signedEmail"></span>
+<button onclick="cloudLogout()">Sign out</button>
+<button onclick="uploadLocal()">Upload this device's local inventory</button>
 </div>
-<div id="items"></div>
+<p class="warning">Use the same account on your phone and tablet. Upload local items only after reviewing them; this action replaces the cloud inventory.</p>
 </section>
-
-<section class="card">
-<h2>Add / Edit Item</h2>
-<input id="editId" type="hidden">
-<div class="grid">
-<div>
+<section class="stats">
+<div class="stat"><strong id="entries">0</strong>Items</div>
+<div class="stat"><strong id="units">0</strong>Total units</div>
+<div class="stat"><strong id="locations">0</strong>Locations used</div>
+</section>
+<h2>Inventory locations</h2>
+<nav id="nav"></nav>
+<div class="controls">
+<input id="search" placeholder="Search items...">
+<button class="add" onclick="showForm()">＋ Add item</button>
+<button onclick="openUpdate()">Update from ChatGPT</button>
+<button onclick="exportData()">Export</button>
+<button onclick="document.getElementById('file').click()">Import</button>
+<input id="file" type="file" accept=".json" class="hidden" onchange="importData(event)">
+</div>
+<section id="updatePanel" class="panel hidden">
+<h2>Update from ChatGPT</h2>
+<p>Send your inventory screenshot to ChatGPT and open the update link it gives you. You can also paste that link here.</p>
+<input id="updateLink" placeholder="Paste ChatGPT update link">
+<div class="controls">
+<button onclick="loadUpdateLink()">Preview update</button>
+<button onclick="closeUpdate()">Cancel</button>
+</div>
+<div id="updatePreview"></div>
+</section>
+<form id="form" class="hidden" onsubmit="saveItem(event)">
+<h2 id="formTitle">Add item</h2>
 <label>Item name</label>
-<input id="itemName" placeholder="e.g. Cadmium">
-</div>
-<div>
+<input id="name" required placeholder="e.g. Cadmium">
 <label>Quantity</label>
-<input id="quantity" type="number" min="0" value="1">
-</div>
-<div>
+<input id="qty" type="number" min="0" value="1" required>
 <label>Location</label>
-<select id="itemLocation">
-<option>Exosuit</option>
-<option>Starship</option>
-<option>Multi-Tool</option>
-<option>Freighter</option>
-<option>Storage</option>
-<option>Exocraft</option>
-</select>
-</div>
-</div>
+<select id="location"></select>
 <label>Notes</label>
-<textarea id="notes" rows="2"></textarea>
-<div class="actions">
-<button onclick="saveItem()">Save Item</button>
-<button class="secondary" onclick="clearForm()">Clear</button>
+<input id="notes" placeholder="Optional notes">
+<div class="controls">
+<button class="add" type="submit">Save item</button>
+<button type="button" onclick="hideForm()">Cancel</button>
 </div>
-</section>
-
-<section class="card">
-<h2>🤖 Update from ChatGPT</h2>
-<p>Send an inventory screenshot to ChatGPT. Open the update link ChatGPT gives you to preview and apply changes here.</p>
-<div id="updateStatus" class="status">No pending update.</div>
-<div id="preview" class="hidden">
-<h3>Update preview</h3>
-<div id="previewItems"></div>
-<div class="actions">
-<button onclick="applyUpdate()">Apply Update</button>
-<button class="secondary" onclick="cancelUpdate()">Cancel</button>
-</div>
-</div>
-</section>
-
-<section class="card">
-<h2>Backup & Import</h2>
-<p class="muted">Export your inventory as a backup. Import replaces the current inventory.</p>
-<div class="actions">
-<button onclick="exportData()">Export Backup</button>
-<button class="secondary" onclick="document.getElementById('importFile').click()">Import JSON</button>
-<input id="importFile" type="file" accept=".json,application/json" class="hidden">
-</div>
-</section>
-
+</form>
+<h2 id="heading">All inventory</h2>
+<div id="items"></div>
 </main>
+<footer>NMS Companion · Cloud sync when signed in · local backup kept on this device</footer>
 <script>
-const KEY='nmsitems';
-const BACKUP_KEY='nmsitems_backup';
-const LOCATIONS=['Exosuit','Starship','Multi-Tool','Freighter','Storage','Exocraft'];
-let items=[];
-let pendingUpdate=null;
-
-function el(id){return document.getElementById(id)}
-function load(){
+const places=[["all","All inventory"],["exosuit","Exosuit"],["starship","Starship"],["freighter","Freighter"],...Array.from({length:10},(_,i)=>["storage"+i,"Storage Container "+i]),["multitool","Multi-Tool"]];
+const $=id=>document.getElementById(id),placeName=id=>places.find(p=>p[0]===id)?.[1]||id,validLocation=id=>places.some(p=>p[0]===id&&id!=="all");
+let items=[],current="all",editing=null,pendingUpdate=[];
+function normalizeItems(a){
+return a.map(x=>({...x,qty:Number(x.qty??x.quantity??0),location:({Exosuit:'exosuit',Starship:'starship',Freighter:'freighter','Multi-Tool':'multitool',Storage:'storage0',Exocraft:'storage0'})[x.location]||x.location}));
+}
 try{
-const data=JSON.parse(localStorage.getItem(KEY)||'[]');
-items=Array.isArray(data)?data:[];
-}catch(e){items=[]}
-render();
+const saved=JSON.parse(localStorage.getItem("nmsitems")||"[]");
+items=Array.isArray(saved)?normalizeItems(saved):[]
+}catch(e){alert("Inventory could not be read. Your saved data was not changed.")}
+function saveData(next=items){
+if(window.cloudReady!==true){
+if(window.cloudConfigured)throw Error("Cloud not connected. Please sign in before changing inventory.");
 }
-function persist(){
-localStorage.setItem(KEY,JSON.stringify(items));
-render();
+localStorage.setItem("nmsitems",JSON.stringify(next));
+if(window.cloudReady)window.cloudSave(next).catch(err=>{
+alert("Cloud sync failed: "+err.message);
+$("cloudStatus").textContent="Sync failed — check connection"
+})
 }
-function escapeHtml(s){
-return String(s??'').replace(/[&<>"']/g,c=>({
-'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
-})[c]);
+function escapeHTML(s){
+return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))
 }
 function render(){
-const filter=el('locationFilter').value;
-const search=el('search').value.toLowerCase();
-const visible=items.filter(x=>
-(filter==='All'||x.location===filter)&&
-String(x.name||'').toLowerCase().includes(search)
-);
-el('items').innerHTML=visible.length?
-visible.map(x=>`
-<div class="item">
-<strong>${escapeHtml(x.name)}</strong>
-<div>${escapeHtml(x.location)} · Quantity: ${escapeHtml(x.quantity)}</div>
-${x.notes?`<small>${escapeHtml(x.notes)}</small>`:''}
-<div class="actions">
-<button class="secondary" onclick="editItem(${JSON.stringify(x.id)})">Edit</button>
-<button class="danger" onclick="deleteItem(${JSON.stringify(x.id)})">Delete</button>
-</div>
-</div>`).join(''):
-'<p class="muted">No items found.</p>';
+$("nav").innerHTML=places.map(p=>`<button class="${current===p[0]?"active":""}" onclick="selectPlace('${p[0]}')">${p[1]} (${p[0]==="all"?items.length:items.filter(x=>x.location===p[0]).length})</button>`).join("");
+$("heading").textContent=placeName(current);
+const q=$("search").value.toLowerCase();
+const visible=items.filter(x=>(current==="all"||x.location===current)&&(String(x.name)+" "+(x.notes||"")).toLowerCase().includes(q));
+$("entries").textContent=items.length;
+$("units").textContent=items.reduce((a,x)=>a+(Number(x.qty)||0),0).toLocaleString();
+$("locations").textContent=new Set(items.map(x=>x.location)).size;
+$("items").innerHTML=visible.length?visible.map(x=>`<div class="item"><h3>${escapeHTML(x.name)}</h3><div class="qty">${Number(x.qty).toLocaleString()}</div><small>${escapeHTML(placeName(x.location))}</small>${x.notes?`<p>${escapeHTML(x.notes)}</p>`:""}<div class="actions"><button onclick="editItem('${escapeHTML(x.id)}')">Edit</button><button class="delete" onclick="deleteItem('${escapeHTML(x.id)}')">Delete</button></div></div>`).join(""):'<div class="item">No items found.</div>';
 }
-function clearForm(){
-el('editId').value='';
-el('itemName').value='';
-el('quantity').value=1;
-el('itemLocation').value='Exosuit';
-el('notes').value='';
+function selectPlace(id){current=id;render()}
+function showForm(){
+editing=null;$("form").reset();
+$("formTitle").textContent="Add item";
+$("location").innerHTML=places.filter(p=>p[0]!=="all").map(p=>`<option value="${p[0]}">${p[1]}</option>`).join("");
+$("location").value=current==="all"?"exosuit":current;
+$("form").classList.remove("hidden");$("name").focus()
 }
-function saveItem(){
-const name=el('itemName').value.trim();
-const quantity=Number(el('quantity').value);
-if(!name||!Number.isFinite(quantity)||quantity<0){
-alert('Enter a valid name and quantity.');return;
-}
-const id=el('editId').value;
-const item={
-id:id||String(Date.now())+Math.random().toString(36).slice(2),
-name,quantity,
-location:el('itemLocation').value,
-notes:el('notes').value.trim()
-};
-const i=items.findIndex(x=>String(x.id)===String(id));
-if(i>=0)items[i]=item;else items.push(item);
-persist();clearForm();
+function hideForm(){$("form").classList.add("hidden")}
+function saveItem(e){
+e.preventDefault();
+const x={id:editing||crypto.randomUUID(),name:$("name").value.trim(),qty:Math.max(0,Number($("qty").value)),location:$("location").value,notes:$("notes").value.trim()};
+if(!x.name)return;
+const next=editing?items.map(y=>y.id===editing?x:y):[...items,x];
+try{saveData(next);items=next;hideForm();render()}catch(err){alert("Could not save: "+err.message)}
 }
 function editItem(id){
-const x=items.find(x=>String(x.id)===String(id));
-if(!x)return;
-el('editId').value=x.id;
-el('itemName').value=x.name;
-el('quantity').value=x.quantity;
-el('itemLocation').value=x.location;
-el('notes').value=x.notes||'';
-window.scrollTo({top:document.body.scrollHeight/3,behavior:'smooth'});
+const x=items.find(y=>y.id===id);if(!x)return;
+showForm();editing=id;$("formTitle").textContent="Edit item";
+$("name").value=x.name;$("qty").value=x.qty;
+$("location").value=x.location;$("notes").value=x.notes||""
 }
 function deleteItem(id){
-if(!confirm('Delete this item?'))return;
-items=items.filter(x=>String(x.id)!==String(id));
-persist();
+if(!confirm("Delete this item?"))return;
+const next=items.filter(x=>x.id!==id);
+try{saveData(next);items=next;render()}catch(e){alert("Could not delete: "+e.message)}
 }
 function exportData(){
-const blob=new Blob([JSON.stringify(items,null,2)],{type:'application/json'});
-const a=document.createElement('a');
+const blob=new Blob([JSON.stringify({app:"NMS Companion",items},null,2)],{type:"application/json"});
+const a=document.createElement("a");
 a.href=URL.createObjectURL(blob);
-a.download='nms-companion-backup.json';
+a.download="nms-companion-backup.json";
 a.click();
-setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+setTimeout(()=>URL.revokeObjectURL(a.href),1000)
 }
-el('importFile').addEventListener('change',async e=>{
-const file=e.target.files[0];
-if(!file)return;
+function importData(e){
+const file=e.target.files[0];e.target.value="";if(!file)return;
+const reader=new FileReader();
+reader.onload=()=>{
 try{
-const data=JSON.parse(await file.text());
-if(!Array.isArray(data))throw Error('Invalid format');
-if(!confirm('Replace your current inventory with imported data?'))return;
-localStorage.setItem(BACKUP_KEY,JSON.stringify(items));
-items=data;
-persist();
-alert('Import completed.');
-}catch(err){alert('Import failed: '+err.message)}
-e.target.value='';
-});
-el('locationFilter').addEventListener('change',render);
-el('search').addEventListener('input',render);
-
-function decodeBase64Url(s){
-const normalized=s.replace(/-/g,'+').replace(/_/g,'/');
-const binary=atob(normalized);
-const bytes=Uint8Array.from(binary,c=>c.charCodeAt(0));
-return new TextDecoder().decode(bytes);
+const data=JSON.parse(reader.result),incoming=Array.isArray(data)?data:data.items;
+if(!Array.isArray(incoming))throw Error("Invalid file");
+if(!confirm("Importing will replace your current inventory. Continue?"))return;
+const next=normalizeItems(incoming).filter(x=>x&&typeof x.name==="string"&&validLocation(x.location));
+saveData(next);items=next;render()
+}catch(err){alert("Invalid backup or storage error: "+err.message)}
+};
+reader.readAsText(file)
 }
-function normalizeUpdate(raw){
-if(!raw||typeof raw!=='object'||!Array.isArray(raw.items))
-throw Error('Invalid update format');
-const mode=raw.mode||'merge';
-if(mode!=='merge')throw Error('Unsupported update mode');
-const changes=raw.items.map(x=>{
-const name=String(x.name||'').trim();
-const location=String(x.location||'').trim();
-const quantity=Number(x.quantity);
-if(!name||!LOCATIONS.includes(location)||
-!Number.isSafeInteger(quantity)||quantity<0)
-throw Error('Invalid item: '+name);
-return{name,location,quantity,notes:String(x.notes||'')};
-});
-return{mode,items:changes};
+// ChatGPT update link format: #nms-update=<base64url(UTF-8 JSON)>
+function openUpdate(){
+$("updatePanel").classList.remove("hidden");
+$("updatePanel").scrollIntoView({behavior:"smooth"})
 }
-function checkUpdateLink(){
+function closeUpdate(){
+pendingUpdate=[];$("updatePreview").replaceChildren();
+$("updatePanel").classList.add("hidden")
+}
+function decodeUpdate(value){
+if(value.length>200000)throw Error("Update link too large");
+const bytes=Uint8Array.from(atob(value.replace(/-/g,"+").replace(/_/g,"/")),c=>c.charCodeAt(0));
+return JSON.parse(new TextDecoder().decode(bytes))
+}
+function loadUpdateLink(){
+try{
+const value=$("updateLink").value.trim();
+const fragment=value.includes("#")?value.slice(value.indexOf("#")+1):value;
+const params=new URLSearchParams(fragment);
+const encoded=params.get("nms-update")||params.get("nmsupdate");
+if(!encoded)throw Error("No NMS update found");
+previewUpdate(decodeUpdate(encoded))
+}catch(e){alert("Cannot read update: "+e.message)}
+}
+function previewUpdate(data){
+if(data&&Array.isArray(data.items)&&!data.app){
+data={app:"NMS Companion",version:2,mode:data.mode||"merge",items:data.items.map(x=>({...x,qty:x.qty??x.quantity,location:x.location==="Exosuit"?"exosuit":x.location==="Starship"?"starship":x.location==="Freighter"?"freighter":x.location==="Multi-Tool"?"multitool":x.location}))}
+}
+if(!data||data.app!=="NMS Companion"||data.version!==2||data.mode!=="merge"||!Array.isArray(data.items)||data.items.length>300)throw Error("Unsupported update format");
+pendingUpdate=data.items.map((x,i)=>{
+if(!x||typeof x.name!=="string"||!x.name.trim()||x.name.length>120||!validLocation(x.location)||!Number.isSafeInteger(x.qty)||x.qty<0||x.qty>999999999||(x.notes!==undefined&&typeof x.notes!=="string"))throw Error("Invalid item "+(i+1));
+return {name:x.name.trim(),qty:x.qty,location:x.location,notes:(x.notes||"").slice(0,500)}
+});
+openUpdate();
+const preview=$("updatePreview");preview.replaceChildren();
+const intro=document.createElement("p");
+intro.textContent="Review recognized items. Uncheck incorrect items. Matching names in the same location will be updated; other items remain.";
+preview.append(intro);
+pendingUpdate.forEach((x,i)=>{
+const row=document.createElement("div");row.className="preview-row";
+const label=document.createElement("label"),cb=document.createElement("input");
+cb.type="checkbox";cb.checked=true;cb.dataset.updateIndex=i;
+label.append(cb,document.createTextNode(x.name+" — "+x.qty+" — "+placeName(x.location)));
+row.append(label);preview.append(row)
+});
+const warning=document.createElement("p");warning.className="warning";
+warning.textContent="Verify quantities carefully. Unlisted items will not be deleted.";
+preview.append(warning);
+const apply=document.createElement("button");apply.className="add";
+apply.textContent="Apply selected updates";apply.onclick=applyChatGPTUpdate;preview.append(apply)
+}
+function applyChatGPTUpdate(){
+const chosen=[...document.querySelectorAll("[data-update-index]:checked")].map(cb=>pendingUpdate[Number(cb.dataset.updateIndex)]);
+if(!chosen.length){alert("Select at least one item");return}
+if(!confirm("Apply "+chosen.length+" updates?"))return;
+const next=items.map(x=>({...x}));
+for(const x of chosen){
+const found=next.find(y=>y.location===x.location&&String(y.name).trim().toLowerCase()===x.name.toLowerCase());
+if(found){found.qty=x.qty;if(x.notes)found.notes=x.notes}
+else next.push({...x,id:crypto.randomUUID()})
+}
+try{
+localStorage.setItem("nmsitems-before-chatgpt-update",JSON.stringify(items));
+saveData(next);items=next;
+history.replaceState(null,"",location.pathname+location.search);
+closeUpdate();render();alert("Inventory updated!")
+}catch(e){alert("Could not save update: "+e.message)}
+}
+function checkIncomingUpdate(){
 const params=new URLSearchParams(location.hash.slice(1));
-const encoded=params.get('nmsupdate');
+const encoded=params.get("nms-update")||params.get("nmsupdate");
 if(!encoded)return;
+try{previewUpdate(decodeUpdate(encoded))}
+catch(e){alert("Invalid ChatGPT update link: "+e.message)}
+}
+window.addEventListener("hashchange",checkIncomingUpdate);
+$("search").addEventListener("input",render);
+render();checkIncomingUpdate();
+</script>
+<script type="module">
+import {initializeApp} from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js';
+import {getAuth,onAuthStateChanged,signInWithEmailAndPassword,createUserWithEmailAndPassword,signOut} from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js';
+import {getFirestore,doc,onSnapshot,setDoc,serverTimestamp} from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js';
+
+let auth,db,unsubscribe=null,firstSnapshot=true;
+const initialLocal=localStorage.getItem('nmsitems')||'[]';
+
+const CONFIG_PLACEHOLDER={
+"apiKey":"AIzaSyA96Nyt9YS3io7CS3ThzqM55qXCDdahqAc",
+"authDomain":"nms-companion-5b830.firebaseapp.com",
+"projectId":"nms-companion-5b830",
+"storageBucket":"nms-companion-5b830.firebasestorage.app",
+"messagingSenderId":"307205063883",
+"appId":"1:307205063883:web:7349677205918b0be2074e"
+};
+
+function status(message){
+document.getElementById('cloudStatus').textContent=message
+}
+async function start(config){
 try{
-pendingUpdate=normalizeUpdate(JSON.parse(decodeBase64Url(encoded)));
-showPreview();
-}catch(err){
-el('updateStatus').textContent='Update link error: '+err.message;
+if(!config?.apiKey||!config?.projectId||!config?.appId)
+throw Error('Missing Firebase configuration fields');
+window.cloudConfigured=true;
+const app=initializeApp(config);
+auth=getAuth(app);db=getFirestore(app);
+document.getElementById('setupCloud').classList.add('hidden');
+onAuthStateChanged(auth,user=>{
+if(unsubscribe){unsubscribe();unsubscribe=null}
+window.cloudReady=false;
+document.getElementById('cloudAuth').classList.toggle('hidden',!!user);
+document.getElementById('cloudSigned').classList.toggle('hidden',!user);
+if(!user){status('Sign in to synchronize your inventory.');return}
+document.getElementById('signedEmail').textContent=user.email||'';
+status('Connecting to cloud…');firstSnapshot=true;
+unsubscribe=onSnapshot(doc(db,'users',user.uid),snap=>{
+if(!snap.exists()){
+items=[];render();window.cloudReady=true;
+status('Connected. Cloud inventory is empty. Use Upload local inventory if needed.');
+return
 }
-history.replaceState(null,'',location.pathname+location.search);
-}
-function showPreview(){
-if(!pendingUpdate)return;
-el('updateStatus').textContent=
-`${pendingUpdate.items.length} item(s) ready for review.`;
-el('preview').classList.remove('hidden');
-el('previewItems').innerHTML=pendingUpdate.items.map(x=>{
-const old=items.find(y=>
-String(y.name).toLowerCase()===x.name.toLowerCase()&&
-y.location===x.location);
-return `<div class="item">
-<strong>${escapeHtml(x.name)}</strong>
-<div>${escapeHtml(x.location)}</div>
-<div>${old?'Current: '+escapeHtml(old.quantity):'New item'}
- → ${escapeHtml(x.quantity)}</div>
-</div>`;
-}).join('');
-}
-function applyUpdate(){
-if(!pendingUpdate)return;
-localStorage.setItem(BACKUP_KEY,JSON.stringify(items));
-for(const change of pendingUpdate.items){
-const i=items.findIndex(x=>
-String(x.name).toLowerCase()===change.name.toLowerCase()&&
-x.location===change.location);
-if(i>=0){
-items[i].quantity=change.quantity;
-if(change.notes)items[i].notes=change.notes;
-}else{
-items.push({
-id:String(Date.now())+Math.random().toString(36).slice(2),
-...change
-});
+const data=snap.data();
+if(!Array.isArray(data.items)){status('Invalid cloud inventory');return}
+items=normalizeItems(data.items);
+localStorage.setItem('nmsitems',JSON.stringify(items));
+render();window.cloudReady=true;
+status('✓ Cloud synced — '+items.length+' items')
+},err=>{
+window.cloudReady=false;
+status('Cloud error: '+err.message)
+})
+})
+}catch(e){
+window.cloudConfigured=false;
+status('Setup failed: '+e.message)
 }
 }
-persist();
-pendingUpdate=null;
-el('preview').classList.add('hidden');
-el('updateStatus').textContent='Update applied successfully.';
-}
-function cancelUpdate(){
-pendingUpdate=null;
-el('preview').classList.add('hidden');
-el('updateStatus').textContent='Update cancelled.';
-}
-window.addEventListener('hashchange',checkUpdateLink);
-load();
-checkUpdateLink();
+window.configureCloud=()=>{
+try{
+const config=JSON.parse(document.getElementById('firebaseConfig').value);
+localStorage.setItem('nms-firebase-config',JSON.stringify(config));
+start(config)
+}catch(e){status('Invalid configuration: '+e.message)}
+};
+window.cloudLogin=async(create)=>{
+try{
+const email=document.getElementById('email').value.trim(),
+password=document.getElementById('password').value;
+await (create?createUserWithEmailAndPassword(auth,email,password):signInWithEmailAndPassword(auth,email,password))
+}catch(e){status('Sign-in failed: '+e.message)}
+};
+window.cloudLogout=async()=>{
+try{await signOut(auth)}catch(e){status(e.message)}
+};
+window.cloudSave=async(next)=>{
+if(!auth?.currentUser)throw Error('Not signed in');
+await setDoc(doc(db,'users',auth.currentUser.uid),{
+items:next,updatedAt:serverTimestamp()
+})
+};
+window.uploadLocal=async()=>{
+if(!window.cloudReady)return alert('Wait for cloud connection');
+let saved;
+try{saved=JSON.parse(initialLocal)}
+catch(e){return alert('Invalid local data')}
+if(!Array.isArray(saved))return alert('Invalid local data');
+if(!confirm('Replace cloud inventory with '+saved.length+' items originally saved on this device? Other devices will receive this inventory.'))return;
+try{
+await window.cloudSave(normalizeItems(saved));
+status('Local inventory uploaded')
+}catch(e){status('Upload failed: '+e.message)}
+};
+const config=CONFIG_PLACEHOLDER||JSON.parse(localStorage.getItem('nms-firebase-config')||'null');
+if(config)start(config);
 </script>
 </body>
 </html>
