@@ -4,373 +4,374 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>NMS Companion 3.0</title>
+<meta name="theme-color" content="#101827">
+<title>NMS Companion 4.0</title>
 <style>
+:root{font-family:system-ui,-apple-system,sans-serif;color:#eaf0fa;background:#0b1220}
 *{box-sizing:border-box}
-body{margin:0;background:#101b22;color:#e9f4f2;font:16px Arial,sans-serif}
-header{padding:22px;background:#19332f;border-bottom:2px solid #54d5ad}
-h1{margin:0;color:#76e3bd}
-header p{color:#b5ccc5}
-main{max-width:1100px;margin:auto;padding:18px}
-.stats,.controls,nav,.actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:15px}
-.stat,.item,form,.panel{background:#20343c;padding:14px;border-radius:10px}
-.stat{flex:1;min-width:100px}
-.stat strong{display:block;font-size:25px;color:#76e3bd}
-button{background:#29444b;color:white;border:1px solid #47636a;border-radius:8px;padding:11px;cursor:pointer}
-button.active,button.add{background:#58d2aa;color:#10231e}
-button.delete{color:#ff9999}
-input,select{background:#182a32;color:white;border:1px solid #47636a;border-radius:8px;padding:11px;font-size:16px;width:100%}
-.controls input{flex:1;min-width:160px}
-#items{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
-.item h3{margin:0 0 8px}
-.qty{color:#76e3bd;font-size:23px;font-weight:bold}
-.item small{color:#a9c0bd}
-.actions{margin-top:12px}
-.actions button{flex:1}
-form{display:grid;gap:10px;margin-bottom:18px}
-.hidden{display:none}
-label{color:#b9d0ca;font-size:13px}
-.panel{border:1px solid #58d2aa;margin-bottom:16px}
-.preview-row{padding:10px;border-bottom:1px solid #38545c}
-.preview-row label{display:flex;align-items:center;gap:9px;font-size:15px}
-.preview-row input{width:auto}
-.warning{color:#ffd18a}
-footer{color:#8fa9a5;text-align:center;font-size:12px;padding:25px}
-#cloudStatus{font-size:14px;color:#b9d0ca;margin:8px 0}
-#cloudPanel input{margin:5px 0}
-#cloudPanel{border-color:#47636a}
-#cloudPanel button{margin:4px}
-#cloudPanel p{line-height:1.5}
+body{margin:0}
+header{padding:20px 16px;background:#14223a;border-bottom:1px solid #33445d}
+h1{margin:0;font-size:1.5rem}
+h2{font-size:1.1rem}
+small,.muted{color:#9db0cb}
+main{max-width:1000px;margin:auto;padding:16px}
+.panel{background:#152238;border:1px solid #33445d;border-radius:14px;padding:16px;margin-bottom:16px}
+input,select,button,textarea{font:inherit;border-radius:9px;padding:10px;background:#0d192a;color:#fff;border:1px solid #4b6281;max-width:100%}
+button{cursor:pointer;background:#2761a2;border:0;font-weight:600}
+button:disabled{opacity:.5}
+button.secondary{background:#344963}
+button.danger{background:#8d303a}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.grow{flex:1;min-width:160px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.item{background:#0e192c;border:1px solid #33445d;border-radius:10px;padding:12px}
+.item b{display:block}
+.item .qty{font-size:1.3rem;color:#8fc5ff}
+label{display:block;margin:8px 0 4px}
+.hidden{display:none!important}
+.warn{color:#ffce7a}
+.good{color:#86e2af}
+.error{color:#ff9999}
+dialog{background:#17243a;color:#fff;border:1px solid #526985;border-radius:14px;width:min(680px,94vw);max-height:85vh}
+dialog::backdrop{background:#000a}
+textarea{width:100%;min-height:120px}
+#status{margin-top:10px;min-height:20px}
+#previewList{max-height:40vh;overflow:auto}
+.hint{font-size:.87rem;color:#aebdd1}
+hr{border:0;border-top:1px solid #33445d;margin:16px 0}
 </style>
 </head>
 <body>
 <header>
-<h1>🚀 NMS COMPANION 3.0</h1>
-<p>Personal No Man's Sky inventory tracker</p>
+<h1>🚀 NMS Companion <small>4.0</small></h1>
+<div class="muted">No Man's Sky inventory · Cloud sync · ChatGPT updates</div>
 </header>
 <main>
-<section class="panel" id="cloudPanel">
-<h2>☁️ Cloud sync</h2>
-<p id="cloudStatus" role="status">Cloud is not configured. Your local inventory remains available.</p>
-<div id="setupCloud">
-<p>First-time setup: paste the Firebase web app configuration JSON from Firebase Console. This configuration is public app information, not a secret key. You can later embed it in the page for all your devices.</p>
-<input id="firebaseConfig" placeholder='Firebase config JSON: {"apiKey":"...",...}'>
-<button onclick="configureCloud()">Connect Firebase</button>
+<section class="panel" id="authPanel">
+<h2>Cloud account</h2>
+<div id="signedOut">
+<div class="row">
+<input class="grow" id="email" type="email" placeholder="Email" autocomplete="email">
+<input class="grow" id="password" type="password" placeholder="Password" autocomplete="current-password">
+<button id="login">Sign in</button>
+<button class="secondary" id="register">Create account</button>
 </div>
-<div id="cloudAuth" class="hidden">
-<input id="email" type="email" autocomplete="username" placeholder="Email">
-<input id="password" type="password" autocomplete="current-password" placeholder="Password (at least 6 characters)">
-<button onclick="cloudLogin(false)">Sign in</button>
-<button onclick="cloudLogin(true)">Create account</button>
 </div>
-<div id="cloudSigned" class="hidden">
-<span id="signedEmail"></span>
-<button onclick="cloudLogout()">Sign out</button>
-<button onclick="uploadLocal()">Upload this device's local inventory</button>
+<div id="signedIn" class="hidden">
+<div class="row">
+<span id="userLabel" class="grow"></span>
+<button class="secondary" id="logout">Sign out</button>
 </div>
-<p class="warning">Use the same account on your phone and tablet. Upload local items only after reviewing them; this action replaces the cloud inventory.</p>
+</div>
+<div id="status" role="status">Connecting…</div>
 </section>
-<section class="stats">
-<div class="stat"><strong id="entries">0</strong>Items</div>
-<div class="stat"><strong id="units">0</strong>Total units</div>
-<div class="stat"><strong id="locations">0</strong>Locations used</div>
-</section>
-<h2>Inventory locations</h2>
-<nav id="nav"></nav>
-<div class="controls">
-<input id="search" placeholder="Search items...">
-<button class="add" onclick="showForm()">＋ Add item</button>
-<button onclick="openUpdate()">Update from ChatGPT</button>
-<button onclick="exportData()">Export</button>
-<button onclick="document.getElementById('file').click()">Import</button>
-<input id="file" type="file" accept=".json" class="hidden" onchange="importData(event)">
+<section class="panel">
+<div class="row">
+<h2 style="margin-right:auto">Inventory</h2>
+<span id="count" class="muted">0 items</span>
 </div>
-<section id="updatePanel" class="panel hidden">
-<h2>Update from ChatGPT</h2>
-<p>Send your inventory screenshot to ChatGPT and open the update link it gives you. You can also paste that link here.</p>
-<input id="updateLink" placeholder="Paste ChatGPT update link">
-<div class="controls">
-<button onclick="loadUpdateLink()">Preview update</button>
-<button onclick="closeUpdate()">Cancel</button>
+<div class="row">
+<select id="location" aria-label="Location">
+<option value="all">All locations</option>
+<option value="exosuit">Exosuit</option>
+<option value="starship">Starship · Radiant Pillar BC1</option>
+<option value="freighter">Freighter</option>
+<option value="multitool">Multi-tool</option>
+<option value="storage0">Storage 0</option>
+<option value="storage1">Storage 1</option>
+<option value="storage2">Storage 2</option>
+<option value="storage3">Storage 3</option>
+<option value="storage4">Storage 4</option>
+<option value="storage5">Storage 5</option>
+<option value="storage6">Storage 6</option>
+<option value="storage7">Storage 7</option>
+<option value="storage8">Storage 8</option>
+<option value="storage9">Storage 9</option>
+</select>
+<input id="search" class="grow" placeholder="Search items">
+<button id="add">+ Add item</button>
 </div>
-<div id="updatePreview"></div>
+<div id="items" class="grid" style="margin-top:14px"></div>
 </section>
-<form id="form" class="hidden" onsubmit="saveItem(event)">
-<h2 id="formTitle">Add item</h2>
-<label>Item name</label>
-<input id="name" required placeholder="e.g. Cadmium">
-<label>Quantity</label>
-<input id="qty" type="number" min="0" value="1" required>
-<label>Location</label>
-<select id="location"></select>
-<label>Notes</label>
-<input id="notes" placeholder="Optional notes">
-<div class="controls">
-<button class="add" type="submit">Save item</button>
-<button type="button" onclick="hideForm()">Cancel</button>
+<section class="panel">
+<h2>ChatGPT updates</h2>
+<p class="hint">Open an update link from ChatGPT, or paste its JSON here. Preview before applying. Replace mode completely overwrites the current inventory only after confirmation.</p>
+<textarea id="json" placeholder='{"app":"NMS Companion","version":2,"mode":"replace","items":[{"name":"Gold","qty":458,"location":"exosuit"}]}'></textarea>
+<div class="row">
+<button id="previewJson">Preview JSON</button>
+<button class="secondary" id="export">Export backup (.json)</button>
+<button class="secondary" id="import">Import backup</button>
+<input type="file" id="file" accept="application/json,.json" class="hidden">
+</div>
+</section>
+<section class="panel">
+<h2>Data management</h2>
+<p class="hint">For a fresh inventory, use a ChatGPT link with <code>mode: replace</code>. No old Unverified items will be kept. Export a backup first if you want one.</p>
+<button class="danger" id="clear">Clear entire cloud inventory</button>
+</section>
+</main>
+<dialog id="editor">
+<form method="dialog" id="editorForm">
+<h2 id="editorTitle">Item</h2>
+<label>Name<input id="editName" required maxlength="120" style="width:100%"></label>
+<label>Quantity<input id="editQty" required type="number" min="0" max="999999999" step="1" style="width:100%"></label>
+<label>Location<select id="editLoc" style="width:100%"></select></label>
+<label>Notes<input id="editNotes" maxlength="500" style="width:100%"></label>
+<div class="row" style="margin-top:15px">
+<button type="submit">Save</button>
+<button type="button" class="secondary" id="cancelEdit">Cancel</button>
+<button type="button" class="danger" id="deleteItem">Delete</button>
 </div>
 </form>
-<h2 id="heading">All inventory</h2>
-<div id="items"></div>
-</main>
-<footer>NMS Companion · Cloud sync when signed in · local backup kept on this device</footer>
-<script>
-const places=[["all","All inventory"],["exosuit","Exosuit"],["starship","Starship"],["freighter","Freighter"],...Array.from({length:10},(_,i)=>["storage"+i,"Storage Container "+i]),["multitool","Multi-Tool"]];
-const $=id=>document.getElementById(id),placeName=id=>places.find(p=>p[0]===id)?.[1]||id,validLocation=id=>places.some(p=>p[0]===id&&id!=="all");
-let items=[],current="all",editing=null,pendingUpdate=[];
-function normalizeItems(a){
-return a.map(x=>({...x,qty:Number(x.qty??x.quantity??0),location:({Exosuit:'exosuit',Starship:'starship',Freighter:'freighter','Multi-Tool':'multitool',Storage:'storage0',Exocraft:'storage0'})[x.location]||x.location}));
-}
-try{
-const saved=JSON.parse(localStorage.getItem("nmsitems")||"[]");
-items=Array.isArray(saved)?normalizeItems(saved):[]
-}catch(e){alert("Inventory could not be read. Your saved data was not changed.")}
-function saveData(next=items){
-if(window.cloudReady!==true){
-if(window.cloudConfigured)throw Error("Cloud not connected. Please sign in before changing inventory.");
-}
-localStorage.setItem("nmsitems",JSON.stringify(next));
-if(window.cloudReady)window.cloudSave(next).catch(err=>{
-alert("Cloud sync failed: "+err.message);
-$("cloudStatus").textContent="Sync failed — check connection"
-})
-}
-function escapeHTML(s){
-return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))
-}
-function render(){
-$("nav").innerHTML=places.map(p=>`<button class="${current===p[0]?"active":""}" onclick="selectPlace('${p[0]}')">${p[1]} (${p[0]==="all"?items.length:items.filter(x=>x.location===p[0]).length})</button>`).join("");
-$("heading").textContent=placeName(current);
-const q=$("search").value.toLowerCase();
-const visible=items.filter(x=>(current==="all"||x.location===current)&&(String(x.name)+" "+(x.notes||"")).toLowerCase().includes(q));
-$("entries").textContent=items.length;
-$("units").textContent=items.reduce((a,x)=>a+(Number(x.qty)||0),0).toLocaleString();
-$("locations").textContent=new Set(items.map(x=>x.location)).size;
-$("items").innerHTML=visible.length?visible.map(x=>`<div class="item"><h3>${escapeHTML(x.name)}</h3><div class="qty">${Number(x.qty).toLocaleString()}</div><small>${escapeHTML(placeName(x.location))}</small>${x.notes?`<p>${escapeHTML(x.notes)}</p>`:""}<div class="actions"><button onclick="editItem('${escapeHTML(x.id)}')">Edit</button><button class="delete" onclick="deleteItem('${escapeHTML(x.id)}')">Delete</button></div></div>`).join(""):'<div class="item">No items found.</div>';
-}
-function selectPlace(id){current=id;render()}
-function showForm(){
-editing=null;$("form").reset();
-$("formTitle").textContent="Add item";
-$("location").innerHTML=places.filter(p=>p[0]!=="all").map(p=>`<option value="${p[0]}">${p[1]}</option>`).join("");
-$("location").value=current==="all"?"exosuit":current;
-$("form").classList.remove("hidden");$("name").focus()
-}
-function hideForm(){$("form").classList.add("hidden")}
-function saveItem(e){
-e.preventDefault();
-const x={id:editing||crypto.randomUUID(),name:$("name").value.trim(),qty:Math.max(0,Number($("qty").value)),location:$("location").value,notes:$("notes").value.trim()};
-if(!x.name)return;
-const next=editing?items.map(y=>y.id===editing?x:y):[...items,x];
-try{saveData(next);items=next;hideForm();render()}catch(err){alert("Could not save: "+err.message)}
-}
-function editItem(id){
-const x=items.find(y=>y.id===id);if(!x)return;
-showForm();editing=id;$("formTitle").textContent="Edit item";
-$("name").value=x.name;$("qty").value=x.qty;
-$("location").value=x.location;$("notes").value=x.notes||""
-}
-function deleteItem(id){
-if(!confirm("Delete this item?"))return;
-const next=items.filter(x=>x.id!==id);
-try{saveData(next);items=next;render()}catch(e){alert("Could not delete: "+e.message)}
-}
-function exportData(){
-const blob=new Blob([JSON.stringify({app:"NMS Companion",items},null,2)],{type:"application/json"});
-const a=document.createElement("a");
-a.href=URL.createObjectURL(blob);
-a.download="nms-companion-backup.json";
-a.click();
-setTimeout(()=>URL.revokeObjectURL(a.href),1000)
-}
-function importData(e){
-const file=e.target.files[0];e.target.value="";if(!file)return;
-const reader=new FileReader();
-reader.onload=()=>{
-try{
-const data=JSON.parse(reader.result),incoming=Array.isArray(data)?data:data.items;
-if(!Array.isArray(incoming))throw Error("Invalid file");
-if(!confirm("Importing will replace your current inventory. Continue?"))return;
-const next=normalizeItems(incoming).filter(x=>x&&typeof x.name==="string"&&validLocation(x.location));
-saveData(next);items=next;render()
-}catch(err){alert("Invalid backup or storage error: "+err.message)}
-};
-reader.readAsText(file)
-}
-// ChatGPT update link format: #nms-update=<base64url(UTF-8 JSON)>
-function openUpdate(){
-$("updatePanel").classList.remove("hidden");
-$("updatePanel").scrollIntoView({behavior:"smooth"})
-}
-function closeUpdate(){
-pendingUpdate=[];$("updatePreview").replaceChildren();
-$("updatePanel").classList.add("hidden")
-}
-function decodeUpdate(value){
-if(value.length>200000)throw Error("Update link too large");
-const bytes=Uint8Array.from(atob(value.replace(/-/g,"+").replace(/_/g,"/")),c=>c.charCodeAt(0));
-return JSON.parse(new TextDecoder().decode(bytes))
-}
-function loadUpdateLink(){
-try{
-const value=$("updateLink").value.trim();
-const fragment=value.includes("#")?value.slice(value.indexOf("#")+1):value;
-const params=new URLSearchParams(fragment);
-const encoded=params.get("nms-update")||params.get("nmsupdate");
-if(!encoded)throw Error("No NMS update found");
-previewUpdate(decodeUpdate(encoded))
-}catch(e){alert("Cannot read update: "+e.message)}
-}
-function previewUpdate(data){
-if(data&&Array.isArray(data.items)&&!data.app){
-data={app:"NMS Companion",version:2,mode:data.mode||"merge",items:data.items.map(x=>({...x,qty:x.qty??x.quantity,location:x.location==="Exosuit"?"exosuit":x.location==="Starship"?"starship":x.location==="Freighter"?"freighter":x.location==="Multi-Tool"?"multitool":x.location}))}
-}
-if(!data||data.app!=="NMS Companion"||data.version!==2||data.mode!=="merge"||!Array.isArray(data.items)||data.items.length>300)throw Error("Unsupported update format");
-pendingUpdate=data.items.map((x,i)=>{
-if(!x||typeof x.name!=="string"||!x.name.trim()||x.name.length>120||!validLocation(x.location)||!Number.isSafeInteger(x.qty)||x.qty<0||x.qty>999999999||(x.notes!==undefined&&typeof x.notes!=="string"))throw Error("Invalid item "+(i+1));
-return {name:x.name.trim(),qty:x.qty,location:x.location,notes:(x.notes||"").slice(0,500)}
-});
-openUpdate();
-const preview=$("updatePreview");preview.replaceChildren();
-const intro=document.createElement("p");
-intro.textContent="Review recognized items. Uncheck incorrect items. Matching names in the same location will be updated; other items remain.";
-preview.append(intro);
-pendingUpdate.forEach((x,i)=>{
-const row=document.createElement("div");row.className="preview-row";
-const label=document.createElement("label"),cb=document.createElement("input");
-cb.type="checkbox";cb.checked=true;cb.dataset.updateIndex=i;
-label.append(cb,document.createTextNode(x.name+" — "+x.qty+" — "+placeName(x.location)));
-row.append(label);preview.append(row)
-});
-const warning=document.createElement("p");warning.className="warning";
-warning.textContent="Verify quantities carefully. Unlisted items will not be deleted.";
-preview.append(warning);
-const apply=document.createElement("button");apply.className="add";
-apply.textContent="Apply selected updates";apply.onclick=applyChatGPTUpdate;preview.append(apply)
-}
-function applyChatGPTUpdate(){
-const chosen=[...document.querySelectorAll("[data-update-index]:checked")].map(cb=>pendingUpdate[Number(cb.dataset.updateIndex)]);
-if(!chosen.length){alert("Select at least one item");return}
-if(!confirm("Apply "+chosen.length+" updates?"))return;
-const next=items.map(x=>({...x}));
-for(const x of chosen){
-const found=next.find(y=>y.location===x.location&&String(y.name).trim().toLowerCase()===x.name.toLowerCase());
-if(found){found.qty=x.qty;if(x.notes)found.notes=x.notes}
-else next.push({...x,id:crypto.randomUUID()})
-}
-try{
-localStorage.setItem("nmsitems-before-chatgpt-update",JSON.stringify(items));
-saveData(next);items=next;
-history.replaceState(null,"",location.pathname+location.search);
-closeUpdate();render();alert("Inventory updated!")
-}catch(e){alert("Could not save update: "+e.message)}
-}
-function checkIncomingUpdate(){
-const params=new URLSearchParams(location.hash.slice(1));
-const encoded=params.get("nms-update")||params.get("nmsupdate");
-if(!encoded)return;
-try{previewUpdate(decodeUpdate(encoded))}
-catch(e){alert("Invalid ChatGPT update link: "+e.message)}
-}
-window.addEventListener("hashchange",checkIncomingUpdate);
-$("search").addEventListener("input",render);
-render();checkIncomingUpdate();
-</script>
+</dialog>
+<dialog id="previewDialog">
+<h2>Review ChatGPT update</h2>
+<p id="previewInfo"></p>
+<div id="previewList"></div>
+<p class="warn" id="replaceWarning"></p>
+<div class="row">
+<button id="apply">Apply update</button>
+<button class="secondary" id="cancelPreview">Cancel</button>
+</div>
+</dialog>
 <script type="module">
-import {initializeApp} from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js';
-import {getAuth,onAuthStateChanged,signInWithEmailAndPassword,createUserWithEmailAndPassword,signOut} from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js';
-import {getFirestore,doc,onSnapshot,setDoc,serverTimestamp} from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js';
+import {initializeApp} from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
+import {getAuth,onAuthStateChanged,signInWithEmailAndPassword,createUserWithEmailAndPassword,signOut} from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
+import {getFirestore,doc,onSnapshot,setDoc,serverTimestamp} from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
 
-let auth,db,unsubscribe=null,firstSnapshot=true;
-const initialLocal=localStorage.getItem('nmsitems')||'[]';
-
-const CONFIG_PLACEHOLDER={
-"apiKey":"AIzaSyA96Nyt9YS3io7CS3ThzqM55qXCDdahqAc",
-"authDomain":"nms-companion-5b830.firebaseapp.com",
-"projectId":"nms-companion-5b830",
-"storageBucket":"nms-companion-5b830.firebasestorage.app",
-"messagingSenderId":"307205063883",
-"appId":"1:307205063883:web:7349677205918b0be2074e"
+const firebaseConfig={
+apiKey:'AIzaSyA96Nyt9YS3io7CS3ThzqM55qXCDdahqAc',
+authDomain:'nms-companion-5b830.firebaseapp.com',
+projectId:'nms-companion-5b830',
+storageBucket:'nms-companion-5b830.firebasestorage.app',
+messagingSenderId:'307205063883',
+appId:'1:307205063883:web:7349677205918b0be2074e'
 };
 
-function status(message){
-document.getElementById('cloudStatus').textContent=message
+const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app);
+const $=id=>document.getElementById(id);
+const locations=['exosuit','starship','freighter','multitool',...Array.from({length:10},(_,i)=>'storage'+i)];
+let items=[],user=null,unsub=null,loaded=false,working=false,pending=null,editing=-1,hashProcessed='';
+
+function status(message,kind=''){
+$('status').textContent=message;
+$('status').className=kind;
 }
-async function start(config){
+
+function escapeHtml(s){
+return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function normalize(raw){
+if(!raw||typeof raw!=='object'||Array.isArray(raw))throw Error('Invalid update object');
+if(!['merge','replace'].includes(raw.mode))throw Error('Mode must be merge or replace');
+if(!Array.isArray(raw.items)||raw.items.length>2000)throw Error('Invalid item list');
+const converted=raw.items.map((it,i)=>{
+const name=String(it.name??'').trim();
+const qty=Number(it.qty??it.quantity);
+const location=String(it.location??'').toLowerCase().replace(/\s+/g,'');
+if(!name||name.length>120||!Number.isSafeInteger(qty)||qty<0||qty>999999999||!locations.includes(location))
+throw Error('Invalid item at row '+(i+1));
+return {name,qty,location,notes:String(it.notes??'').slice(0,500)};
+});
+const seen=new Set();
+for(const it of converted){
+const k=it.location+'\u0000'+it.name.toLowerCase();
+if(seen.has(k))throw Error('Duplicate item: '+it.name+' / '+it.location);
+seen.add(k);
+}
+return {mode:raw.mode,items:converted};
+}
+
+function merge(old,incoming){
+const next=old.map(x=>({...x}));
+for(const item of incoming){
+const i=next.findIndex(x=>x.location===item.location&&x.name.toLowerCase()===item.name.toLowerCase());
+if(i>=0)next[i]=item;
+else next.push(item);
+}
+return next;
+}
+
+function render(){
+const q=$('search').value.toLowerCase().trim(),loc=$('location').value;
+const filtered=items.map((it,i)=>({...it,index:i})).filter(it=>(loc==='all'||it.location===loc)&&(!q||(it.name+' '+it.notes).toLowerCase().includes(q)));
+$('count').textContent=items.length+' items';
+$('items').replaceChildren();
+if(!filtered.length){
+$('items').textContent=loaded?'No matching items.':'Sign in to load inventory.';
+return;
+}
+for(const it of filtered){
+const div=document.createElement('div');
+div.className='item';
+div.innerHTML='<b>'+escapeHtml(it.name)+'</b><div class="qty">'+it.qty.toLocaleString('en-US')+'</div><div class="hint">'+escapeHtml(it.location)+(it.notes?' · '+escapeHtml(it.notes):'')+'</div>';
+const btn=document.createElement('button');
+btn.className='secondary';
+btn.textContent='Edit';
+btn.style.marginTop='8px';
+btn.onclick=()=>openEditor(it.index);
+div.append(btn);
+$('items').append(div);
+}
+}
+
+async function save(next){
+if(!user||!loaded)throw Error('Sign in and wait for cloud data to load');
+if(working)throw Error('Another save is in progress');
+working=true;
+status('Saving to cloud…');
 try{
-if(!config?.apiKey||!config?.projectId||!config?.appId)
-throw Error('Missing Firebase configuration fields');
-window.cloudConfigured=true;
-const app=initializeApp(config);
-auth=getAuth(app);db=getFirestore(app);
-document.getElementById('setupCloud').classList.add('hidden');
-onAuthStateChanged(auth,user=>{
-if(unsubscribe){unsubscribe();unsubscribe=null}
-window.cloudReady=false;
-document.getElementById('cloudAuth').classList.toggle('hidden',!!user);
-document.getElementById('cloudSigned').classList.toggle('hidden',!user);
-if(!user){status('Sign in to synchronize your inventory.');return}
-document.getElementById('signedEmail').textContent=user.email||'';
-status('Connecting to cloud…');firstSnapshot=true;
-unsubscribe=onSnapshot(doc(db,'users',user.uid),snap=>{
-if(!snap.exists()){
-items=[];render();window.cloudReady=true;
-status('Connected. Cloud inventory is empty. Use Upload local inventory if needed.');
-return
-}
-const data=snap.data();
-if(!Array.isArray(data.items)){status('Invalid cloud inventory');return}
-items=normalizeItems(data.items);
-localStorage.setItem('nmsitems',JSON.stringify(items));
-render();window.cloudReady=true;
-status('✓ Cloud synced — '+items.length+' items')
-},err=>{
-window.cloudReady=false;
-status('Cloud error: '+err.message)
-})
-})
+await setDoc(doc(db,'users',user.uid),{items:next,updatedAt:serverTimestamp()});
+items=next;
+render();
+status('Cloud synced · '+next.length+' items','good');
 }catch(e){
-window.cloudConfigured=false;
-status('Setup failed: '+e.message)
+status('Cloud save failed: '+e.message,'error');
+throw e;
+}finally{working=false;}
 }
+
+function openEditor(i){
+editing=i;
+const it=items[i]||{name:'',qty:1,location:'exosuit',notes:''};
+$('editorTitle').textContent=i<0?'Add item':'Edit item';
+$('editName').value=it.name;
+$('editQty').value=it.qty;
+$('editLoc').value=it.location;
+$('editNotes').value=it.notes;
+$('deleteItem').classList.toggle('hidden',i<0);
+$('editor').showModal();
 }
-window.configureCloud=()=>{
+
+$('editLoc').innerHTML=locations.map(l=>'<option value="'+l+'">'+l+'</option>').join('');
+$('location').onchange=render;
+$('search').oninput=render;
+$('add').onclick=()=>openEditor(-1);
+$('cancelEdit').onclick=()=>$('editor').close();
+
+$('editorForm').onsubmit=async e=>{
+e.preventDefault();
+const name=$('editName').value.trim(),qty=Number($('editQty').value),location=$('editLoc').value,notes=$('editNotes').value;
+if(!name||!Number.isSafeInteger(qty)||qty<0||qty>999999999)return alert('Check name and quantity');
+const next=items.map(x=>({...x}));
+const match=next.findIndex((x,i)=>i!==editing&&x.location===location&&x.name.toLowerCase()===name.toLowerCase());
+if(match>=0)return alert('This item already exists in that location');
+if(editing>=0)next[editing]={name,qty,location,notes};
+else next.push({name,qty,location,notes});
+try{await save(next);$('editor').close();}catch(e){alert(e.message);}
+};
+
+$('deleteItem').onclick=async()=>{
+if(editing<0||!confirm('Delete this item?'))return;
+try{await save(items.filter((_,i)=>i!==editing));$('editor').close();}catch(e){alert(e.message);}
+};
+
+function preview(raw){
+pending=normalize(raw);
+$('previewInfo').textContent=pending.mode.toUpperCase()+' · '+pending.items.length+' items';
+$('replaceWarning').textContent=pending.mode==='replace'?'WARNING: This will replace ALL existing inventory items in the cloud.':'Merge updates matching names in the same location; other items remain.';
+$('previewList').replaceChildren();
+for(const it of pending.items){
+const p=document.createElement('p');
+p.textContent=it.location+' · '+it.name+' · '+it.qty+(it.notes?' · '+it.notes:'');
+$('previewList').append(p);
+}
+$('previewDialog').showModal();
+}
+
+$('previewJson').onclick=()=>{
+try{preview(JSON.parse($('json').value));}catch(e){alert(e.message);}
+};
+$('cancelPreview').onclick=()=>$('previewDialog').close();
+
+$('apply').onclick=async()=>{
+if(!pending)return;
+if(!user||!loaded)return alert('Sign in and wait for cloud sync first');
+if(pending.mode==='replace'&&!confirm('Replace the ENTIRE cloud inventory? This cannot be undone without a backup.'))return;
+const next=pending.mode==='replace'?pending.items:merge(items,pending.items);
+$('apply').disabled=true;
 try{
-const config=JSON.parse(document.getElementById('firebaseConfig').value);
-localStorage.setItem('nms-firebase-config',JSON.stringify(config));
-start(config)
-}catch(e){status('Invalid configuration: '+e.message)}
+await save(next);
+$('previewDialog').close();
+pending=null;
+history.replaceState(null,'',location.pathname+location.search);
+hashProcessed='';
+}catch(e){alert(e.message);}
+finally{$('apply').disabled=false;}
 };
-window.cloudLogin=async(create)=>{
+
+function readHash(){
+const hash=location.hash.slice(1),prefix=hash.startsWith('nms-update=')?'nms-update=':hash.startsWith('nmsupdate=')?'nmsupdate=':null;
+if(!prefix||hash===hashProcessed)return;
+hashProcessed=hash;
 try{
-const email=document.getElementById('email').value.trim(),
-password=document.getElementById('password').value;
-await (create?createUserWithEmailAndPassword(auth,email,password):signInWithEmailAndPassword(auth,email,password))
-}catch(e){status('Sign-in failed: '+e.message)}
+let s=hash.slice(prefix.length).replace(/-/g,'+').replace(/_/g,'/');
+s+='='.repeat((4-s.length%4)%4);
+const binary=atob(s);
+const bytes=Uint8Array.from(binary,c=>c.charCodeAt(0));
+preview(JSON.parse(new TextDecoder().decode(bytes)));
+}catch(e){alert('Could not read update link: '+e.message);}
+}
+window.addEventListener('hashchange',readHash);
+
+$('export').onclick=()=>{
+const blob=new Blob([JSON.stringify({app:'NMS Companion',version:4,mode:'replace',items},null,2)],{type:'application/json'}),
+url=URL.createObjectURL(blob),a=document.createElement('a');
+a.href=url;
+a.download='nms-companion-backup.json';
+a.click();
+setTimeout(()=>URL.revokeObjectURL(url),1000);
 };
-window.cloudLogout=async()=>{
-try{await signOut(auth)}catch(e){status(e.message)}
+$('import').onclick=()=>$('file').click();
+$('file').onchange=async e=>{
+const f=e.target.files[0];
+if(!f)return;
+try{preview(JSON.parse(await f.text()));}catch(err){alert(err.message);}
+e.target.value='';
 };
-window.cloudSave=async(next)=>{
-if(!auth?.currentUser)throw Error('Not signed in');
-await setDoc(doc(db,'users',auth.currentUser.uid),{
-items:next,updatedAt:serverTimestamp()
-})
+
+$('clear').onclick=async()=>{
+if(!confirm('Delete ALL inventory items in the cloud?'))return;
+if(!confirm('Final confirmation: clear inventory on ALL devices?'))return;
+try{await save([]);}catch(e){alert(e.message);}
 };
-window.uploadLocal=async()=>{
-if(!window.cloudReady)return alert('Wait for cloud connection');
-let saved;
-try{saved=JSON.parse(initialLocal)}
-catch(e){return alert('Invalid local data')}
-if(!Array.isArray(saved))return alert('Invalid local data');
-if(!confirm('Replace cloud inventory with '+saved.length+' items originally saved on this device? Other devices will receive this inventory.'))return;
-try{
-await window.cloudSave(normalizeItems(saved));
-status('Local inventory uploaded')
-}catch(e){status('Upload failed: '+e.message)}
+
+$('login').onclick=async()=>{
+try{await signInWithEmailAndPassword(auth,$('email').value.trim(),$('password').value);}
+catch(e){status(e.message,'error');}
 };
-const config=CONFIG_PLACEHOLDER||JSON.parse(localStorage.getItem('nms-firebase-config')||'null');
-if(config)start(config);
+$('register').onclick=async()=>{
+try{await createUserWithEmailAndPassword(auth,$('email').value.trim(),$('password').value);}
+catch(e){status(e.message,'error');}
+};
+$('logout').onclick=()=>signOut(auth);
+
+onAuthStateChanged(auth,u=>{
+if(unsub){unsub();unsub=null;}
+user=u;
+loaded=false;
+items=[];
+render();
+$('signedOut').classList.toggle('hidden',!!u);
+$('signedIn').classList.toggle('hidden',!u);
+$('userLabel').textContent=u?.email||'';
+if(!u){status('Sign in to sync inventory');return;}
+status('Loading cloud inventory…');
+unsub=onSnapshot(doc(db,'users',u.uid),snapshot=>{
+items=Array.isArray(snapshot.data()?.items)?snapshot.data().items:[];
+loaded=true;
+render();
+status('Cloud synced · '+items.length+' items','good');
+readHash();
+},e=>{
+loaded=false;
+status('Cloud sync error: '+e.message,'error');
+});
+});
+
+render();
+readHash();
 </script>
 </body>
 </html>
