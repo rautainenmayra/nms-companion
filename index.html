@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#101827"><title>NMS Companion 5.1</title><style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#101827"><title>NMS Companion 5.2</title><style>
 :root{font-family:system-ui,-apple-system,sans-serif;color:#eaf0fa;background:#0b1220}*{box-sizing:border-box}body{margin:0}header{padding:20px 16px;background:#14223a;border-bottom:1px solid #33445d}h1{margin:0;font-size:1.5rem}h2{font-size:1.1rem}small,.muted{color:#9db0cb}main{max-width:1000px;margin:auto;padding:16px}.panel{background:#152238;border:1px solid #33445d;border-radius:14px;padding:16px;margin-bottom:16px}input,select,button,textarea{font:inherit;border-radius:9px;padding:10px;background:#0d192a;color:#fff;border:1px solid #4b6281;max-width:100%}button{cursor:pointer;background:#2761a2;border:0;font-weight:600}button:disabled{opacity:.5}button.secondary{background:#344963}button.danger{background:#8d303a}.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.grow{flex:1;min-width:160px}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}.item{background:#0e192c;border:1px solid #33445d;border-radius:10px;padding:12px}.item b{display:block}.item .qty{font-size:1.3rem;color:#8fc5ff}label{display:block;margin:8px 0 4px}.hidden{display:none!important}.warn{color:#ffce7a}.good{color:#86e2af}.error{color:#ff9999}dialog{background:#17243a;color:#fff;border:1px solid #526985;border-radius:14px;width:min(680px,94vw);max-height:85vh}dialog::backdrop{background:#000a}textarea{width:100%;min-height:120px}#status{margin-top:10px;min-height:20px}#previewList{max-height:40vh;overflow:auto}.hint{font-size:.87rem;color:#aebdd1}hr{border:0;border-top:1px solid #33445d;margin:16px 0}
 main{max-width:1700px}.workspace{display:grid;grid-template-columns:minmax(400px,680px) minmax(0,1fr);gap:16px;align-items:start}.workspace>.panel{min-width:0}.needs-panel{position:sticky;top:10px;max-height:calc(100vh - 20px);overflow:auto}.needs-panel #needList{display:flex;flex-direction:column}.needs-panel #needQty{width:85px!important}.item{position:relative}.inventory-card{padding-right:45px;touch-action:pan-y;user-select:none;-webkit-user-select:none}.inventory-card:focus-visible{outline:2px solid #90c6ff}.item-menu{display:none!important;position:absolute;right:7px;top:7px;padding:4px 9px;background:#263d5b;border:1px solid #526985;border-radius:8px;font-size:1.1rem;line-height:1.3}.priority-critical{border-left:5px solid #ff6874;background:#291d2d}.priority-high{border-left:5px solid #ffc46a;background:#282536}.priority-needed{border-left:5px solid #82c5ff}.priority-tag{font-size:.76rem;font-weight:700;margin-top:7px}.priority-critical .priority-tag{color:#ff9da4}.priority-high .priority-tag{color:#ffd58f}.priority-needed .priority-tag{color:#a5d7ff}.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:.78rem;color:#c4d1e4;margin:9px 0}.legend span{white-space:nowrap}.legend i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:4px}.needs-panel .item{padding:10px}@media(max-width:950px){.workspace{grid-template-columns:minmax(0,1fr)}.needs-panel{position:static;max-height:none}.needs-panel #needList{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}}
 
@@ -27,8 +27,11 @@ main{max-width:1700px}.workspace{display:grid;grid-template-columns:minmax(400px
 .recipe-ready{color:#7ce3aa}.recipe-missing{color:#ffc277}
 .recipe-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
 .recipe-quantity{width:80px!important}
+
+.smart-row{margin-top:8px}.smart-badge{padding:5px 8px;font-size:.72rem;border-radius:7px;background:#344963;text-align:left}
+.smart-keep{background:#1c5a44}.smart-sell{background:#73502b}.smart-crafting{background:#284e78}.smart-review{background:#424c62}
 </style></head><body>
-<header><h1>🚀 NMS Companion <small>5.1</small></h1><div class="muted">No Man's Sky inventory · Cloud sync · ChatGPT updates</div></header><main>
+<header><h1>🚀 NMS Companion <small>5.2</small></h1><div class="muted">No Man's Sky inventory · Cloud sync · ChatGPT updates</div></header><main>
 
 <div class="workspace"><section class="panel needs-panel"><h2>My Needs · Crafting Planner</h2><p class="hint">Track your materials and compare with inventory.</p><div class="row"><input id="needSearch" class="grow" list="itemSuggestions" placeholder="Item name (English)"><datalist id="itemSuggestions"></datalist><input id="needQty" type="number" min="1" step="1" value="1" style="width:110px" aria-label="Quantity needed"><button id="addNeed">+ Add need</button></div><div class="row" style="margin-top:12px"><label for="needSort">Sort needs</label><select id="needSort" aria-label="Sort needs"><option value="nameAsc">Name A–Z</option><option value="nameDesc">Name Z–A</option><option value="qtyDesc">Quantity: highest first</option><option value="qtyAsc">Quantity: lowest first</option><option value="missingDesc">Missing: highest first</option><option value="criticality">Criticality: highest first</option></select></div><div id="needList" class="grid" style="margin-top:14px"></div><hr><h3>General Notes</h3><p class="hint">Saved privately to your cloud account.</p><textarea id="generalNotes" maxlength="20000" placeholder="Write your plans, coordinates, discoveries and reminders here..." style="min-height:170px;width:100%"></textarea><div class="row"><button id="saveNotes" class="secondary">Save notes</button><span id="notesStatus" class="hint"></span></div><hr><h3>Item Index</h3><p class="hint" id="indexInfo">Separate reference index · update independently using JSON.</p><div class="row"><button class="secondary" id="indexImport">Update Item Index (.json)</button><input class="hidden" type="file" id="indexFile" accept=".json,application/json"><button class="secondary" id="indexExport">Export Item Index</button><button id="syncCatalogue" title="Merge 132 catalogue items without removing existing entries">Sync 132 catalogue items to cloud</button> <a href="https://app.nmsassistant.com/catalogue/Products" target="_blank" rel="noopener noreferrer" style="font-size:.85rem">Browse Assistant NMS catalogue ↗</a></div></section><section class="panel"><div class="row"><h2 style="margin-right:auto">Inventory</h2><span id="count" class="muted">0 items</span></div><div class="row"><select id="location" aria-label="Location"><option value="all">All locations</option><option value="exosuit">Exosuit</option><option value="starship">Starship · Radiant Pillar BC1</option><option value="freighter">Freighter</option><option value="multitool">Multi-tool</option><option value="storage0">Storage 0</option><option value="storage1">Storage 1</option><option value="storage2">Storage 2</option><option value="storage3">Storage 3</option><option value="storage4">Storage 4</option><option value="storage5">Storage 5</option><option value="storage6">Storage 6</option><option value="storage7">Storage 7</option><option value="storage8">Storage 8</option><option value="storage9">Storage 9</option></select><input id="search" class="grow" placeholder="Search items"><select id="inventorySort" aria-label="Sort inventory"><option value="nameAsc">Name A–Z</option><option value="nameDesc">Name Z–A</option><option value="qtyDesc">Quantity: highest first</option><option value="qtyAsc">Quantity: lowest first</option><option value="criticality" selected>Criticality: highest first</option></select><button id="add">+ Add item</button></div><div class="legend"><span><i style="background:#ff6874"></i>Critical: missing needs / low core stock</span><span><i style="background:#ffc46a"></i>Core / high-use resources</span><span><i style="background:#82c5ff"></i>Needs fulfilled / situational</span></div><div id="items" class="grid" style="margin-top:14px"></div></section>
 </div>
@@ -51,7 +54,7 @@ import {getFirestore,doc,onSnapshot,setDoc,serverTimestamp} from 'https://www.gs
 const firebaseConfig={apiKey:'AIzaSyA96Nyt9YS3io7CS3ThzqM55qXCDdahqAc',authDomain:'nms-companion-5b830.firebaseapp.com',projectId:'nms-companion-5b830',storageBucket:'nms-companion-5b830.firebasestorage.app',messagingSenderId:'307205063883',appId:'1:307205063883:web:7349677205918b0be2074e'};
 const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app);
 const $=id=>document.getElementById(id);const locations=['exosuit','starship','freighter','multitool',...Array.from({length:10},(_,i)=>'storage'+i)];
-let generalNotes="",notesDirty=false,needs=[],itemIndex=[],items=[],user=null,unsub=null,loaded=false,working=false,pending=null,editing=-1,hashProcessed='';
+let generalNotes="",notesDirty=false,needs=[],smartOverrides={},itemIndex=[],items=[],user=null,unsub=null,loaded=false,working=false,pending=null,editing=-1,hashProcessed='';
 function status(message,kind=''){ $('status').textContent=message;$('status').className=kind; }
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function normalize(raw){if(!raw||typeof raw!=='object'||Array.isArray(raw))throw Error('Invalid update object');if(!['merge','replace'].includes(raw.mode))throw Error('Mode must be merge or replace');if(!Array.isArray(raw.items)||raw.items.length>2000)throw Error('Invalid item list');const converted=raw.items.map((it,i)=>{const name=String(it.name??'').trim();const qty=Number(it.qty??it.quantity);const location=String(it.location??'').toLowerCase().replace(/\s+/g,'');if(!name||name.length>120||!Number.isSafeInteger(qty)||qty<0||qty>999999999||!locations.includes(location))throw Error('Invalid item at row '+(i+1));return {name,qty,location,notes:String(it.notes??'').slice(0,500)};});const seen=new Set();for(const it of converted){const k=it.location+'\u0000'+it.name.toLowerCase();if(seen.has(k))throw Error('Duplicate item: '+it.name+' / '+it.location);seen.add(k);}return {mode:raw.mode,items:converted};}
@@ -87,6 +90,12 @@ else{icon.className='inventory-icon-placeholder';icon.textContent='◇';icon.set
 const body=document.createElement('div');body.className='inventory-text';
 body.innerHTML='<b>'+escapeHtml(it.name)+'</b><div class="qty">'+it.qty.toLocaleString('en-US')+'</div><div class="hint">'+escapeHtml(it.location)+(it.notes?' · '+escapeHtml(it.notes):'')+'</div>'+(priorityText?'<div class="priority-tag">'+escapeHtml(priorityText)+'</div>':'');
 div.append(icon,body);
+const smart=smartLabel(it.name);
+const smartRow=document.createElement('div');smartRow.className='smart-row';
+const smartBadge=document.createElement('button');smartBadge.type='button';smartBadge.className='smart-badge smart-'+smart.label.toLowerCase();smartBadge.textContent=smart.label+(smart.overridden?' ✎':'')+' · '+smart.reason;smartBadge.title='Tap to change recommendation';
+smartBadge.onpointerdown=e=>e.stopPropagation();
+smartBadge.onclick=e=>{e.stopPropagation();openSmartEditor(it.name);};
+smartRow.append(smartBadge);body.append(smartRow);
 const catalogueEntry=assistantByName.get(recipeKey(it.name));
 if(catalogueEntry&&recipeFor(catalogueEntry)){
  const recipeButton=document.createElement('button');recipeButton.type='button';recipeButton.className='secondary';
@@ -107,7 +116,7 @@ $('apply').onclick=async()=>{if(!pending)return;if(!user||!loaded)return alert('
 function readHash(){const hash=location.hash.slice(1),prefix=hash.startsWith('nms-update=')?'nms-update=':hash.startsWith('nmsupdate=')?'nmsupdate=':null;if(!prefix||hash===hashProcessed)return;hashProcessed=hash;try{let s=hash.slice(prefix.length).replace(/-/g,'+').replace(/_/g,'/');s+='='.repeat((4-s.length%4)%4);const binary=atob(s);const bytes=Uint8Array.from(binary,c=>c.charCodeAt(0));preview(JSON.parse(new TextDecoder().decode(bytes)));}catch(e){alert('Could not read update link: '+e.message);}}window.addEventListener('hashchange',readHash);
 $('export').onclick=()=>{const blob=new Blob([JSON.stringify({app:'NMS Companion',version:4,mode:'replace',items},null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='nms-companion-backup.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};$('import').onclick=()=>$('file').click();$('file').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{preview(JSON.parse(await f.text()));}catch(err){alert(err.message);}e.target.value='';};$('clear').onclick=async()=>{if(!confirm('Delete ALL inventory items in the cloud?'))return;if(!confirm('Final confirmation: clear inventory on ALL devices?'))return;try{await save([]);}catch(e){alert(e.message);}};
 $('login').onclick=async()=>{try{await signInWithEmailAndPassword(auth,$('email').value.trim(),$('password').value);}catch(e){status(e.message,'error');}};$('register').onclick=async()=>{try{await createUserWithEmailAndPassword(auth,$('email').value.trim(),$('password').value);}catch(e){status(e.message,'error');}};$('logout').onclick=()=>signOut(auth);
-onAuthStateChanged(auth,u=>{if(unsub){unsub();unsub=null;}user=u;loaded=false;items=[];needs=[];itemIndex=[];generalNotes='';notesDirty=false;$('generalNotes').value='';render();renderNeeds();$('signedOut').classList.toggle('hidden',!!u);$('signedIn').classList.toggle('hidden',!u);$('userLabel').textContent=u?.email||'';if(!u){status('Sign in to sync inventory');return;}status('Loading cloud inventory…');unsub=onSnapshot(doc(db,'users',u.uid),snapshot=>{items=Array.isArray(snapshot.data()?.items)?snapshot.data().items:[];needs=Array.isArray(snapshot.data()?.needs)?snapshot.data().needs:[];itemIndex=Array.isArray(snapshot.data()?.itemIndex)?snapshot.data().itemIndex:[];generalNotes=String(snapshot.data()?.generalNotes||'');if(!notesDirty)$('generalNotes').value=generalNotes;loaded=true;render();renderNeeds();status('Cloud synced · '+items.length+' items','good');readHash();},e=>{loaded=false;status('Cloud sync error: '+e.message,'error');});});
+onAuthStateChanged(auth,u=>{if(unsub){unsub();unsub=null;}user=u;loaded=false;items=[];needs=[];smartOverrides={};itemIndex=[];generalNotes='';notesDirty=false;$('generalNotes').value='';render();renderNeeds();$('signedOut').classList.toggle('hidden',!!u);$('signedIn').classList.toggle('hidden',!u);$('userLabel').textContent=u?.email||'';if(!u){status('Sign in to sync inventory');return;}status('Loading cloud inventory…');unsub=onSnapshot(doc(db,'users',u.uid),snapshot=>{items=Array.isArray(snapshot.data()?.items)?snapshot.data().items:[];needs=Array.isArray(snapshot.data()?.needs)?snapshot.data().needs:[];smartOverrides=snapshot.data()?.smartOverrides||{};itemIndex=Array.isArray(snapshot.data()?.itemIndex)?snapshot.data().itemIndex:[];generalNotes=String(snapshot.data()?.generalNotes||'');if(!notesDirty)$('generalNotes').value=generalNotes;loaded=true;render();renderNeeds();status('Cloud synced · '+items.length+' items','good');readHash();},e=>{loaded=false;status('Cloud sync error: '+e.message,'error');});});
 
 function downloadJson(name,obj){const url=URL.createObjectURL(new Blob([JSON.stringify(obj,null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1500);}
 function sortEntries(entries,mode,isNeeds=false){const copy=[...entries];const countMissing=n=>Math.max(0,Number(n.qty||0)-items.filter(x=>x.name.toLowerCase()===n.name.toLowerCase()).reduce((a,x)=>a+Number(x.qty||0),0));const rank=e=>{const name=e.name.toLowerCase(),info=resourceInfo(e.name),have=items.filter(x=>x.name.toLowerCase()===name).reduce((sum,x)=>sum+Number(x.qty||0),0),need=isNeeds?e:needs.find(x=>x.name.toLowerCase()===name);if(need&&have<Number(need.qty||0))return 0;if(info.level==='critical'&&have<info.target)return 1;if(info.level==='critical')return 2;if(info.level==='high')return 3;if(info.level==='situational')return 4;return 5;};copy.sort((a,b)=>{if(mode==='criticality')return rank(a)-rank(b)||a.name.localeCompare(b.name);if(mode==='qtyDesc')return Number(b.qty||0)-Number(a.qty||0)||a.name.localeCompare(b.name);if(mode==='qtyAsc')return Number(a.qty||0)-Number(b.qty||0)||a.name.localeCompare(b.name);if(mode==='missingDesc'&&isNeeds)return countMissing(b)-countMissing(a)||a.name.localeCompare(b.name);if(mode==='nameDesc')return b.name.localeCompare(a.name);return a.name.localeCompare(b.name);});return copy;}
@@ -167,6 +176,71 @@ function recipeIngredients(item,quantity=1){
  }
  return [...grouped.values()].map(r=>({...r,have:items.filter(x=>recipeKey(x.name)===recipeKey(r.name)).reduce((a,x)=>a+Math.max(0,Number(x.qty)||0),0)}));
 }
+function ownedCount(name){return items.filter(x=>recipeKey(x.name)===recipeKey(name)).reduce((a,x)=>a+Math.max(0,Number(x.qty)||0),0);}
+function smartLabel(name){
+ const key=recipeKey(name),override=smartOverrides[key];
+ if(override&&['KEEP','SELL','CRAFTING'].includes(override))return {label:override,reason:'Manual',overridden:true};
+ const need=needs.find(n=>recipeKey(n.name)===key);
+ if(need&&Number(need.qty)>0)return {label:'KEEP',reason:'My Needs',overridden:false};
+ const entry=assistantByName.get(key);
+ if(!entry)return {label:'REVIEW',reason:'Unknown item',overridden:false};
+ const category=String(entry.category||'').toLowerCase(),group=String(entry.group||'').toLowerCase();
+ if(category==='tradeitems'||group.includes('trade commodity')||group.includes('trade good'))return {label:'SELL',reason:'Trade goods',overridden:false};
+ if(['rawmaterials','constructedtechnology','technology','technologymodule','upgrademodules'].includes(category))return {label:'KEEP',reason:'Useful resource / upgrade',overridden:false};
+ if(category==='products'&&recipeFor(entry))return {label:'CRAFTING',reason:'Crafted component',overridden:false};
+ if(category==='cooking'||category==='fishing')return {label:'REVIEW',reason:'Optional use',overridden:false};
+ return {label:'REVIEW',reason:'Check before selling',overridden:false};
+}
+async function openSmartEditor(name){
+ const key=recipeKey(name),current=smartOverrides[key]||'AUTO';
+ const choice=prompt('Recommendation for '+name+'\\nAUTO / KEEP / SELL / CRAFTING\\n(Enter AUTO to restore automatic recommendation)',current);
+ if(choice===null)return;
+ const value=choice.trim().toUpperCase();
+ if(!['AUTO','KEEP','SELL','CRAFTING'].includes(value)){alert('Choose AUTO, KEEP, SELL or CRAFTING');return;}
+ if(!user||!loaded)return alert('Sign in first');
+ const next={...smartOverrides};
+ if(value==='AUTO')delete next[key];else next[key]=value;
+ try{await setDoc(doc(db,'users',user.uid),{smartOverrides:next},{merge:true});smartOverrides=next;render();}
+ catch(e){alert('Could not save recommendation: '+e.message);}
+}
+function craftPlan(item,quantity){
+ const stock=new Map(),required=new Map(),steps=new Map(),issues=new Set();
+ for(const it of items){const k=recipeKey(it.name);stock.set(k,(stock.get(k)||0)+Math.max(0,Number(it.qty)||0));}
+ function expand(entry,count,path,depth){
+  if(!Number.isFinite(count)||count<=0)return;
+  const key=recipeKey(entry.name),available=Math.min(stock.get(key)||0,count);
+  stock.set(key,(stock.get(key)||0)-available);
+  const short=count-available;if(short<=0)return;
+  const recipe=recipeFor(entry);
+  if(!recipe||depth>16||path.has(key)){
+   required.set(key,{name:entry.name,qty:(required.get(key)?.qty||0)+short,source:entry});
+   if(depth>16||path.has(key))issues.add('Recipe cycle or depth limit: '+entry.name);
+   return;
+  }
+  steps.set(key,{name:entry.name,qty:(steps.get(key)?.qty||0)+short,source:entry});
+  const next=new Set(path);next.add(key);
+  for(const r of recipe){
+   const child=assistantById.get(String(r.Id??r.id??''));
+   const amount=Number(r.Quantity??r.quantity);
+   if(!child||!Number.isFinite(amount)||amount<=0){
+    issues.add('Incomplete ingredient data for '+entry.name);continue;
+   }
+   expand(child,short*amount,next,depth+1);
+  }
+ }
+ // The requested output is to be crafted, so don't consume already-owned output items.
+ const entryRecipe=recipeFor(item);
+ if(entryRecipe){
+  steps.set(recipeKey(item.name),{name:item.name,qty:quantity,source:item});
+  for(const r of entryRecipe){
+   const child=assistantById.get(String(r.Id??r.id??''));
+   const amount=Number(r.Quantity??r.quantity);
+   if(child&&Number.isFinite(amount)&&amount>0)expand(child,quantity*amount,new Set([recipeKey(item.name)]),1);
+   else issues.add('Incomplete ingredient data for '+item.name);
+  }
+ }
+ return {required:[...required.values()],steps:[...steps.values()],issues:[...issues]};
+}
 function showInventoryRecipe(item){
  $('recipeDialogTitle').textContent=item.name;
  const body=$('recipeDialogBody');body.replaceChildren();
@@ -178,7 +252,7 @@ $('closeRecipeDialog').onclick=()=>$('recipeDialog').close();
 function makeRecipePanel(item,initialQty=1){
  const req=recipeFor(item);if(!req)return null;
  const root=document.createElement('div');root.className='recipe-box';
- const title=document.createElement('h4');title.textContent='Crafting requirements';root.append(title);
+ const title=document.createElement('h4');title.textContent='Crafting Planner · full material chain';root.append(title);
  const controls=document.createElement('div');controls.className='row';
  const label=document.createElement('label');label.textContent='Craft quantity ';
  const qty=document.createElement('input');qty.type='number';qty.min='1';qty.max='99999';qty.step='1';qty.value=String(initialQty);qty.className='recipe-quantity';qty.setAttribute('aria-label','Craft quantity');
@@ -189,43 +263,40 @@ function makeRecipePanel(item,initialQty=1){
  actions.append(add);root.append(actions);
  function refresh(){
   const n=Math.max(1,Math.min(99999,Math.floor(Number(qty.value)||1)));
-  const ingredients=recipeIngredients(item,n);
-  rows.replaceChildren();
-  let allAvailable=ingredients.length>0;
-  for(const ing of ingredients){
-   const missing=Math.max(0,ing.required-ing.have);
-   if(missing>0)allAvailable=false;
+  const plan=craftPlan(item,n);rows.replaceChildren();
+  const heading=document.createElement('h4');heading.textContent='Crafting steps';rows.append(heading);
+  for(const step of plan.steps){
    const line=document.createElement('div');line.className='recipe-line';
-   if(ing.source?.iconUrl){const icon=document.createElement('img');icon.src=ing.source.iconUrl;icon.alt='';icon.loading='lazy';icon.onerror=()=>icon.remove();line.append(icon);}
-   const body=document.createElement('div');body.className='recipe-main';
-   const name=document.createElement('strong');name.textContent=ing.name;
-   const detail=document.createElement('small');detail.textContent='Need '+ing.required.toLocaleString('en-US')+' · Have '+ing.have.toLocaleString('en-US');
-   body.append(name,detail);
-   const result=document.createElement('span');result.className='recipe-status '+(missing?'recipe-missing':'recipe-ready');result.textContent=missing?'Missing '+missing.toLocaleString('en-US'):'Ready';
-   line.append(body,result);rows.append(line);
+   const txt=document.createElement('span');txt.textContent=step.name+' ×'+step.qty.toLocaleString('en-US');line.append(txt);rows.append(line);
   }
-  if(!ingredients.length)rows.textContent='Recipe requirements are not available in this catalogue.';
-  const summary=document.createElement('p');summary.className=allAvailable?'recipe-ready':'recipe-missing';
-  summary.textContent=allAvailable?'You have enough materials for this recipe.':'Some materials are missing from your inventory.';
-  rows.append(summary);
-  add.disabled=!ingredients.some(x=>x.required>x.have);
+  const materials=document.createElement('h4');materials.textContent='Missing base materials (after using inventory)';rows.append(materials);
+  for(const ing of plan.required){
+   const line=document.createElement('div');line.className='recipe-line';
+   if(ing.source?.iconUrl){const img=document.createElement('img');img.src=ing.source.iconUrl;img.alt='';img.loading='lazy';img.onerror=()=>img.remove();line.append(img);}
+   const body=document.createElement('div');body.className='recipe-main';body.textContent=ing.name;
+   const status=document.createElement('strong');status.className='recipe-missing';status.textContent='Missing '+ing.qty.toLocaleString('en-US');
+   line.append(body,status);rows.append(line);
+  }
+  if(!plan.required.length){const msg=document.createElement('p');msg.className='recipe-ready';msg.textContent='All base materials are available.';rows.append(msg);}
+  for(const issue of plan.issues){const warn=document.createElement('p');warn.className='warn';warn.textContent=issue;rows.append(warn);}
+  add.disabled=!plan.required.length||plan.issues.length>0;
  }
  qty.addEventListener('input',refresh);
  add.onclick=async()=>{
   if(!user||!loaded){alert('Sign in to save My Needs.');return;}
   const n=Math.max(1,Math.min(99999,Math.floor(Number(qty.value)||1)));
-  const missing=recipeIngredients(item,n).filter(x=>x.required>x.have);
-  if(!missing.length)return;
-  // Existing needs are target stock levels, not incremental shopping-list entries.
-  // Preserve any higher existing targets and avoid duplicate names.
+  const plan=craftPlan(item,n);
+  if(plan.issues.length)return alert('Recipe data is incomplete; cannot safely add needs.');
+  if(!plan.required.length)return;
   const next=needs.map(x=>({...x}));
-  for(const ing of missing){
-   const target=ing.required;
+  for(const ing of plan.required){
+   // My Needs stores desired total inventory, not just the missing amount.
+   const target=ownedCount(ing.name)+ing.qty;
    const i=next.findIndex(x=>recipeKey(x.name)===recipeKey(ing.name));
    if(i>=0)next[i].qty=Math.max(Number(next[i].qty)||0,target);
    else next.push({name:ing.name,qty:target});
   }
-  try{await saveNeeds(next);alert('Missing materials added to My Needs.');refresh();}
+  try{await saveNeeds(next);alert('Missing base materials added to My Needs.');refresh();}
   catch(e){alert('Could not save My Needs: '+e.message);}
  };
  refresh();return root;
